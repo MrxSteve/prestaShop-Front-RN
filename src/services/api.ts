@@ -6,7 +6,7 @@ import { StorageService } from '../utils/storage';
 class ApiService {
     private api: AxiosInstance;
 
-    private baseURL = API_BASE_URL;
+    private baseURL = 'https://presto-shop.duckdns.org/api';
 
     constructor() {
         this.api = axios.create({

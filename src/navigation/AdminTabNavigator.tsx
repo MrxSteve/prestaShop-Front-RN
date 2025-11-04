@@ -44,6 +44,13 @@ const DashboardWithHeader = () => (
   </View>
 );
 
+const RolesWithHeader = () =>(
+  <View style={styles.container}>
+    <CustomHeader title="Roles" />
+    <AdminDashboardScreen />
+  </View>
+)
+
 const UsuariosYCuentasWithHeader = () => (
   <View style={styles.container}>
     <CustomHeader title="Usuarios y Cuentas" />
