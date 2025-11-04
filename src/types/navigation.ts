@@ -11,6 +11,7 @@ export type AuthStackParamList = {
 export type CatalogStackParamList = {
     CatalogMain: undefined;
     CategoryManagement: undefined;
+    ProductManagement: undefined;
 };
 
 export type AdminTabParamList = {

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import CustomHeader from '../../components/CustomHeader';
 import { categoryService } from '../../services/categoryService';
+import { productoService } from '../../services/productoService';
 import { CatalogStats } from '../../types/catalog';
 
 const { width } = Dimensions.get('window');
@@ -30,23 +31,26 @@ export default function AdminCatalogoScreen() {
 
     const loadStats = useCallback(async () => {
         try {
-            // Por ahora solo cargamos las categorías reales, los productos serán mock data
-            const categoriesResponse = await categoryService.listarTodas(0, 1);
+            // Cargar estadísticas reales de categorías y productos
+            const [categoriesResponse, productStats] = await Promise.all([
+                categoryService.listarTodas(0, 1), // Solo necesitamos el conteo
+                productoService.obtenerEstadisticas(),
+            ]);
             
             setStats({
-                totalProductos: 245, // Mock data
+                totalProductos: productStats.totalProductos,
                 totalCategorias: categoriesResponse.totalElements,
-                productosActivos: 220, // Mock data
-                productosSinStock: 25, // Mock data
+                productosActivos: productStats.productosDisponibles,
+                productosSinStock: productStats.productosNoDisponibles + productStats.productosDescontinuados,
             });
         } catch (error) {
             console.error('Error loading stats:', error);
             // Usar datos mock en caso de error
             setStats({
-                totalProductos: 245,
+                totalProductos: 0,
                 totalCategorias: 0,
-                productosActivos: 220,
-                productosSinStock: 25,
+                productosActivos: 0,
+                productosSinStock: 0,
             });
         } finally {
             setLoading(false);
@@ -68,6 +72,11 @@ export default function AdminCatalogoScreen() {
         navigation.navigate('CategoryManagement');
     };
 
+    const navigateToProducts = () => {
+        // @ts-ignore
+        navigation.navigate('ProductManagement');
+    };
+
     const handleComingSoon = (feature: string) => {
         Alert.alert('Próximamente', `${feature} estará disponible en la próxima versión`);
     };
@@ -75,8 +84,7 @@ export default function AdminCatalogoScreen() {
     const estadisticas = [
         { titulo: 'Total Productos', valor: stats.totalProductos.toString(), icono: '📦', color: '#2196F3' },
         { titulo: 'Categorías', valor: stats.totalCategorias.toString(), icono: '🏷️', color: '#4CAF50' },
-        { titulo: 'Productos Activos', valor: stats.productosActivos.toString(), icono: '✅', color: '#FF9800' },
-        { titulo: 'Sin Stock', valor: stats.productosSinStock.toString(), icono: '⚠️', color: '#F44336' },
+        { titulo: 'Productos Activos', valor: stats.productosActivos.toString(), icono: '✅', color: '#FF9800' }
     ];
 
     const gestionOpciones = [
@@ -86,7 +94,7 @@ export default function AdminCatalogoScreen() {
             icono: '📦',
             color: '#2196F3',
             acciones: ['Agregar Producto', 'Ver Lista', 'Editar', 'Eliminar'],
-            onPress: () => handleComingSoon('Gestión de Productos')
+            onPress: navigateToProducts
         },
         {
             titulo: 'Gestión de Categorías',
@@ -96,33 +104,6 @@ export default function AdminCatalogoScreen() {
             acciones: ['Nueva Categoría', 'Ver Categorías', 'Editar', 'Eliminar'],
             onPress: navigateToCategories
         },
-    ];
-
-    const productosRecientes = [
-        { 
-            id: 1, 
-            nombre: 'iPhone 15 Pro Max', 
-            categoria: 'Electrónicos',
-            precio: 1199.99,
-            stock: 15,
-            fecha: '2024-01-25'
-        },
-        { 
-            id: 2, 
-            nombre: 'Nike Air Jordan', 
-            categoria: 'Deportes',
-            precio: 179.99,
-            stock: 0,
-            fecha: '2024-01-24'
-        },
-        { 
-            id: 3, 
-            nombre: 'MacBook Pro M3', 
-            categoria: 'Electrónicos',
-            precio: 1999.99,
-            stock: 8,
-            fecha: '2024-01-23'
-        }
     ];
 
     if (loading) {
@@ -166,7 +147,7 @@ export default function AdminCatalogoScreen() {
                 <View style={styles.quickActionsGrid}>
                     <TouchableOpacity 
                         style={styles.quickAction}
-                        onPress={() => handleComingSoon('Nuevo Producto')}
+                        onPress={navigateToProducts}
                     >
                         <Text style={styles.quickActionIcon}>➕</Text>
                         <Text style={styles.quickActionText}>Nuevo Producto</Text>
@@ -190,7 +171,7 @@ export default function AdminCatalogoScreen() {
 
                     <TouchableOpacity 
                         style={styles.quickAction}
-                        onPress={() => handleComingSoon('Ver Productos')}
+                        onPress={navigateToProducts}
                     >
                         <Text style={styles.quickActionIcon}>📋</Text>
                         <Text style={styles.quickActionText}>Ver Productos</Text>
@@ -198,7 +179,7 @@ export default function AdminCatalogoScreen() {
 
                     <TouchableOpacity 
                         style={styles.quickAction}
-                        onPress={() => handleComingSoon('Buscar Productos')}
+                        onPress={navigateToProducts}
                     >
                         <Text style={styles.quickActionIcon}>🔍</Text>
                         <Text style={styles.quickActionText}>Buscar Productos</Text>
@@ -249,39 +230,6 @@ export default function AdminCatalogoScreen() {
                         <Text style={styles.viewAllText}>Ver todos</Text>
                     </TouchableOpacity>
                 </View>
-                
-                {productosRecientes.map((producto) => (
-                    <TouchableOpacity 
-                        key={producto.id} 
-                        style={styles.productCard}
-                        onPress={() => handleComingSoon('Detalle del producto')}
-                    >
-                        <View style={styles.productInfo}>
-                            <Text style={styles.productName}>{producto.nombre}</Text>
-                            <Text style={styles.productCategory}>{producto.categoria}</Text>
-                            <Text style={styles.productDate}>Agregado: {producto.fecha}</Text>
-                        </View>
-                        
-                        <View style={styles.productDetails}>
-                            <Text style={styles.productPrice}>${producto.precio}</Text>
-                            <View style={[
-                                styles.stockBadge,
-                                { backgroundColor: producto.stock > 0 ? '#4CAF50' : '#F44336' }
-                            ]}>
-                                <Text style={styles.stockText}>
-                                    Stock: {producto.stock}
-                                </Text>
-                            </View>
-                        </View>
-                        
-                        <TouchableOpacity 
-                            style={styles.editButton}
-                            onPress={() => handleComingSoon('Editar producto')}
-                        >
-                            <Text style={styles.editButtonText}>✏️</Text>
-                        </TouchableOpacity>
-                    </TouchableOpacity>
-                ))}
             </View>
 
             {/* Reportes y análisis */}
@@ -550,5 +498,10 @@ const styles = StyleSheet.create({
     reportArrow: {
         fontSize: 24,
         color: '#ccc',
+    },
+    testAction: {
+        borderWidth: 2,
+        borderColor: '#FF9800',
+        backgroundColor: '#FFF3E0',
     },
 });
