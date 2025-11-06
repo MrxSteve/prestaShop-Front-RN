@@ -8,11 +8,17 @@ export type AuthStackParamList = {
     Login: undefined;
 };
 
+export type CatalogStackParamList = {
+    CatalogMain: undefined;
+    CategoryManagement: undefined;
+    ProductManagement: undefined;
+};
+
 export type AdminTabParamList = {
     Dashboard: undefined;
     UsuariosYCuentas: undefined;
     Ventas: undefined;
-    Catalogo: undefined;
+    Catalogo: NavigatorScreenParams<CatalogStackParamList>;
     Reportes: undefined;
 };
 
@@ -45,6 +51,11 @@ export type RootStackParamList = {
 // Screen Props Types
 export type AuthStackScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<
     AuthStackParamList,
+    T
+>;
+
+export type CatalogStackScreenProps<T extends keyof CatalogStackParamList> = NativeStackScreenProps<
+    CatalogStackParamList,
     T
 >;
 
