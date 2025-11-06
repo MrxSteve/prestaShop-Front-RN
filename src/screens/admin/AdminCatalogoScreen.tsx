@@ -499,9 +499,4 @@ const styles = StyleSheet.create({
         fontSize: 24,
         color: '#ccc',
     },
-    testAction: {
-        borderWidth: 2,
-        borderColor: '#FF9800',
-        backgroundColor: '#FFF3E0',
-    },
 });

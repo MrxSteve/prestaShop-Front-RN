@@ -123,8 +123,6 @@ class ProductoService {
      */
     async crearSinImagen(producto: ProductoImagenRequest): Promise<ProductoResponse> {
         try {
-            console.log('📝 Creando producto sin imagen usando endpoint multipart...');
-            
             const axiosInstance = apiService.getAxiosInstance();
             const baseURL = axiosInstance.defaults.baseURL;
             
@@ -134,9 +132,7 @@ class ProductoService {
             formData.append('precioUnitario', producto.precioUnitario.toString());
             formData.append('categoriaId', producto.categoriaId.toString());
             formData.append('estado', producto.estado);
-            // No agregamos imagen
             
-            // Obtener token de autorización
             const token = await import('../utils/storage').then(s => s.StorageService.getToken());
             const headers: Record<string, string> = {};
             if (token) {
@@ -151,7 +147,6 @@ class ProductoService {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Server response:', errorText);
                 throw new Error(`Error ${response.status}: ${errorText}`);
             }
 
@@ -167,16 +162,15 @@ class ProductoService {
      */
     async crearConImagen(producto: ProductoImagenRequest, imagen?: ImagenLocal): Promise<ProductoResponse> {
         try {
-            // Si no hay imagen, usar el endpoint simple
             if (!imagen) {
-                console.log('Creando producto sin imagen...');
                 return await this.crearSinImagen(producto);
             }
-
-            console.log('Creando producto con imagen...');
+            
+            // Obtener configuración base de axios
             const axiosInstance = apiService.getAxiosInstance();
             const baseURL = axiosInstance.defaults.baseURL;
             
+            // Crear FormData con el formato correcto para React Native
             const formData = new FormData();
             
             // Agregar campos del producto
@@ -188,30 +182,20 @@ class ProductoService {
             formData.append('categoriaId', producto.categoriaId.toString());
             formData.append('estado', producto.estado);
 
-            // Agregar imagen
-            formData.append('imagen', {
+            // Agregar imagen con el formato correcto para React Native
+            const validMimeType = imagen.type && imagen.type.includes('/') ? imagen.type : 'image/jpeg';
+            const imageFile = {
                 uri: imagen.uri,
-                type: imagen.type,
-                name: imagen.name,
-            } as any);
+                type: validMimeType,
+                name: imagen.name || `image_${Date.now()}.jpg`,
+            };
 
-            console.log('Enviando producto con imagen a:', `${baseURL}${this.basePath}/imagen`);
-            console.log('Producto data:', {
-                nombre: producto.nombre,
-                descripcion: producto.descripcion,
-                precioUnitario: producto.precioUnitario,
-                categoriaId: producto.categoriaId,
-                estado: producto.estado,
-                imagen: {
-                    name: imagen.name,
-                    type: imagen.type,
-                    uri: imagen.uri.substring(0, 50) + '...'
-                }
-            });
+            formData.append('imagen', imageFile as any);
 
             // Obtener token de autorización
             const token = await import('../utils/storage').then(s => s.StorageService.getToken());
             const headers: Record<string, string> = {};
+            
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
@@ -224,7 +208,6 @@ class ProductoService {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Server response:', errorText);
                 
                 if (response.status === 409) {
                     throw new Error('Ya existe un producto con ese nombre');
@@ -232,11 +215,17 @@ class ProductoService {
                 if (response.status === 400) {
                     throw new Error('Datos del producto inválidos');
                 }
-                throw new Error(`Error ${response.status}: ${errorText || 'Error desconocido'}`);
+                if (response.status === 413) {
+                    throw new Error('La imagen es demasiado grande');
+                }
+                if (response.status === 415) {
+                    throw new Error('Tipo de archivo no soportado');
+                }
+                throw new Error(`Error ${response.status}: ${errorText || 'Error del servidor'}`);
             }
 
             return await response.json();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating producto:', error);
             throw error;
         }
@@ -247,9 +236,6 @@ class ProductoService {
      */
     async actualizarConImagen(id: number, producto: UpdateProductoImagen, imagen?: ImagenLocal): Promise<ProductoResponse> {
         try {
-            const axiosInstance = apiService.getAxiosInstance();
-            const baseURL = axiosInstance.defaults.baseURL;
-            
             const formData = new FormData();
             
             // Agregar campos del producto (solo los que no son undefined)
@@ -269,18 +255,23 @@ class ProductoService {
                 formData.append('estado', producto.estado);
             }
 
-            // Agregar imagen si existe
+            // Agregar imagen si existe, con el formato correcto para React Native
             if (imagen) {
-                formData.append('imagen', {
+                const validMimeType = imagen.type && imagen.type.includes('/') ? imagen.type : 'image/jpeg';
+                const imageFile = {
                     uri: imagen.uri,
-                    type: imagen.type,
-                    name: imagen.name,
-                } as any);
+                    type: validMimeType,
+                    name: imagen.name || `image_${Date.now()}.jpg`,
+                };
+                formData.append('imagen', imageFile as any);
             }
 
-            // Obtener token de autorización
+            const axiosInstance = apiService.getAxiosInstance();
+            const baseURL = axiosInstance.defaults.baseURL;
+
             const token = await import('../utils/storage').then(s => s.StorageService.getToken());
             const headers: Record<string, string> = {};
+            
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
@@ -292,17 +283,22 @@ class ProductoService {
             });
 
             if (!response.ok) {
+                const errorText = await response.text();
+                
                 if (response.status === 404) {
                     throw new Error('Producto no encontrado');
                 }
                 if (response.status === 409) {
                     throw new Error('Ya existe un producto con ese nombre');
                 }
-                throw new Error(`HTTP error! status: ${response.status}`);
+                if (response.status === 400) {
+                    throw new Error('Datos del producto inválidos');
+                }
+                throw new Error(`Error ${response.status}: ${errorText || 'Error del servidor'}`);
             }
 
             return await response.json();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error updating producto:', error);
             throw error;
         }
@@ -327,26 +323,22 @@ class ProductoService {
      */
     async probarConectividad(): Promise<{ success: boolean; message: string }> {
         try {
-            console.log('🔄 Probando conectividad con el servidor...');
-            const axiosInstance = apiService.getAxiosInstance();
-            console.log('Base URL:', axiosInstance.defaults.baseURL);
-            console.log('Endpoint completo:', `${axiosInstance.defaults.baseURL}${this.basePath}`);
-            
             const response = await this.listarTodos(0, 1);
-            
             return {
                 success: true,
-                message: `✅ Conectividad exitosa. Total productos: ${response.totalElements}. URL: ${axiosInstance.defaults.baseURL}${this.basePath}`
+                message: `Conectividad exitosa. Total productos: ${response.totalElements}`
             };
         } catch (error: any) {
-            console.error('❌ Error de conectividad:', error);
+            console.error('Error de conectividad:', error);
             const errorMessage = error.response?.data?.message || error.message || 'No se pudo conectar al servidor';
             return {
                 success: false,
-                message: `❌ Error: ${errorMessage} (Status: ${error.response?.status || 'Network'})`
+                message: `Error: ${errorMessage}`
             };
         }
     }
+
+
 
     /**
      * Obtener estadísticas de productos (método helper)

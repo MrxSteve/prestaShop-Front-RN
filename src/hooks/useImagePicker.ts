@@ -78,16 +78,39 @@ export const useImagePicker = () => {
             const asset = result.assets[0];
             
             if (asset.uri) {
-                // Generar un nombre de archivo si no existe
-                const fileName = asset.fileName || `image_${Date.now()}.jpg`;
-                // Inferir tipo MIME si no existe
-                const mimeType = asset.type || 'image/jpeg';
+                const uriParts = asset.uri.split('.');
+                const extension = uriParts.length > 1 ? uriParts[uriParts.length - 1].toLowerCase() : 'jpg';
+                const fileName = asset.fileName || `image_${Date.now()}.${extension}`;
+                
+                let mimeType: string;
+                if (asset.type && asset.type.includes('/')) {
+                    mimeType = asset.type;
+                } else {
+                    switch (extension.toLowerCase()) {
+                        case 'png':
+                            mimeType = 'image/png';
+                            break;
+                        case 'gif':
+                            mimeType = 'image/gif';
+                            break;
+                        case 'webp':
+                            mimeType = 'image/webp';
+                            break;
+                        case 'jpg':
+                        case 'jpeg':
+                            mimeType = 'image/jpeg';
+                            break;
+                        default:
+                            mimeType = 'image/jpeg';
+                    }
+                }
 
                 const imagen: ImagenLocal = {
                     uri: asset.uri,
                     type: mimeType,
                     name: fileName,
                 };
+                
                 resolve(imagen);
             } else {
                 resolve(null);

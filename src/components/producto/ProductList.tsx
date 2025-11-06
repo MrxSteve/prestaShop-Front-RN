@@ -17,8 +17,7 @@ import { EstadoProducto, ProductoFiltros, ProductoResponse } from '../../types/p
 import { Pagination, PaginationInfo } from '../common/Pagination';
 import { ProductCard } from './ProductCard';
 
-// 🔧 CONFIGURACIÓN: Cambia este número para mostrar más o menos productos por página
-const PRODUCTS_PER_PAGE = 8;
+const PRODUCTS_PER_PAGE = 10;
 
 interface ProductListProps {
     onEditProduct: (producto: ProductoResponse) => void;
