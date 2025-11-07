@@ -9,6 +9,8 @@ import AdminUsuariosYCuentasScreen from '../screens/admin/AdminUsuariosYCuentasS
 import AdminVentasScreen from '../screens/admin/AdminVentasScreen';
 import { AdminTabParamList } from '../types/navigation';
 import CatalogStackNavigator from './CatalogStackNavigator';
+import UsersStackNavigator from './UsersStackNavigator';
+
 
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
@@ -20,17 +22,10 @@ const DashboardWithHeader = () => (
   </View>
 );
 
-const RolesWithHeader = () =>(
-  <View style={styles.container}>
-    <CustomHeader title="Roles" />
-    <AdminDashboardScreen />
-  </View>
-)
 
 const UsuariosYCuentasWithHeader = () => (
   <View style={styles.container}>
-    <CustomHeader title="Usuarios y Cuentas" />
-    <AdminUsuariosYCuentasScreen />
+        <UsersStackNavigator />
   </View>
 );
 
