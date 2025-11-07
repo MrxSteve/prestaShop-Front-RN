@@ -22,12 +22,14 @@ const PRODUCTS_PER_PAGE = 10;
 interface ProductListProps {
     onEditProduct: (producto: ProductoResponse) => void;
     onAddProduct?: () => void;
+    onViewDetails?: (productId: number) => void;
     refreshTrigger?: number;
 }
 
 export const ProductList: React.FC<ProductListProps> = ({
     onEditProduct,
     onAddProduct,
+    onViewDetails,
     refreshTrigger = 0,
 }) => {
     const [products, setProducts] = useState<ProductoResponse[]>([]);
@@ -78,7 +80,7 @@ export const ProductList: React.FC<ProductListProps> = ({
         }
     }, []);
 
-    const searchProductsByName = async (name: string) => {
+    const searchProductsByName = async (name: string, pageNum: number = 0) => {
         if (!name.trim()) {
             // Si no hay búsqueda, volver a cargar todos
             setSearchQuery('');
@@ -90,13 +92,15 @@ export const ProductList: React.FC<ProductListProps> = ({
 
         try {
             setIsSearching(true);
-            setLoading(true);
+            if (pageNum === 0) {
+                setLoading(true);
+            }
             setError(null);
 
-            const response = await productoService.buscarPorNombre(name.trim(), 0, PRODUCTS_PER_PAGE);
+            const response = await productoService.buscarPorNombre(name.trim(), pageNum, PRODUCTS_PER_PAGE);
             setProducts(response.content);
             setPaginationInfo({
-                currentPage: 0,
+                currentPage: response.number,
                 totalPages: response.totalPages,
                 totalElements: response.totalElements,
                 pageSize: response.size,
@@ -118,27 +122,29 @@ export const ProductList: React.FC<ProductListProps> = ({
         }
     };
 
-    const applyFilters = async () => {
+    const applyFilters = async (pageNum: number = 0) => {
         try {
-            setLoading(true);
+            if (pageNum === 0) {
+                setLoading(true);
+            }
             setError(null);
 
             let response;
 
             if (filters.estado) {
-                response = await productoService.obtenerPorEstado(filters.estado, 0, PRODUCTS_PER_PAGE);
+                response = await productoService.obtenerPorEstado(filters.estado, pageNum, PRODUCTS_PER_PAGE);
             } else if (filters.categoriaId) {
-                response = await productoService.obtenerPorCategoria(filters.categoriaId, 0, PRODUCTS_PER_PAGE);
+                response = await productoService.obtenerPorCategoria(filters.categoriaId, pageNum, PRODUCTS_PER_PAGE);
             } else if (filters.precioMin !== undefined && filters.precioMax !== undefined) {
-                response = await productoService.buscarPorRangoPrecio(filters.precioMin, filters.precioMax, 0, PRODUCTS_PER_PAGE);
+                response = await productoService.buscarPorRangoPrecio(filters.precioMin, filters.precioMax, pageNum, PRODUCTS_PER_PAGE);
             } else {
                 // Si no hay filtros, cargar todos
-                response = await productoService.listarTodos(0, PRODUCTS_PER_PAGE);
+                response = await productoService.listarTodos(pageNum, PRODUCTS_PER_PAGE);
             }
 
             setProducts(response.content);
             setPaginationInfo({
-                currentPage: 0,
+                currentPage: response.number,
                 totalPages: response.totalPages,
                 totalElements: response.totalElements,
                 pageSize: response.size,
@@ -147,6 +153,13 @@ export const ProductList: React.FC<ProductListProps> = ({
         } catch (error: any) {
             console.error('Error applying filters:', error);
             setError('Error al aplicar filtros');
+            setProducts([]);
+            setPaginationInfo({
+                currentPage: 0,
+                totalPages: 0,
+                totalElements: 0,
+                pageSize: PRODUCTS_PER_PAGE,
+            });
         } finally {
             setLoading(false);
         }
@@ -189,7 +202,14 @@ export const ProductList: React.FC<ProductListProps> = ({
     };
 
     const handlePageChange = (page: number) => {
-        if (!searchQuery && Object.keys(filters).length === 0) {
+        if (searchQuery.trim()) {
+            // Si hay búsqueda activa, usar búsqueda paginada
+            searchProductsByName(searchQuery.trim(), page);
+        } else if (Object.keys(filters).length > 0) {
+            // Si hay filtros activos, usar filtros paginados
+            applyFilters(page);
+        } else {
+            // Sin búsqueda ni filtros, paginación normal
             fetchProducts(page);
         }
     };
@@ -217,6 +237,7 @@ export const ProductList: React.FC<ProductListProps> = ({
             producto={item}
             onEdit={onEditProduct}
             onDelete={handleDelete}
+            onViewDetails={onViewDetails}
         />
     );
 
@@ -324,7 +345,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                     </View>
 
                     <View style={styles.filterActions}>
-                        <TouchableOpacity style={styles.applyFiltersButton} onPress={applyFilters}>
+                        <TouchableOpacity style={styles.applyFiltersButton} onPress={() => applyFilters(0)}>
                             <Text style={styles.applyFiltersText}>Aplicar Filtros</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>

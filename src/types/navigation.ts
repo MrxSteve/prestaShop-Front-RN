@@ -12,6 +12,8 @@ export type CatalogStackParamList = {
     CatalogMain: undefined;
     CategoryManagement: undefined;
     ProductManagement: undefined;
+    ProductoDetalle: { productId: number };
+    EditarProducto: { producto: import('./catalog').ProductoResponse };
 };
 
 export type AdminTabParamList = {
