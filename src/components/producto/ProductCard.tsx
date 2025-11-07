@@ -7,14 +7,14 @@ interface ProductCardProps {
     producto: ProductoResponse;
     onEdit: (producto: ProductoResponse) => void;
     onDelete: (id: number) => void;
-    onView?: (producto: ProductoResponse) => void;
+    onViewDetails?: (productId: number) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
     producto,
     onEdit,
     onDelete,
-    onView,
+    onViewDetails,
 }) => {
     const handleDelete = () => {
         Alert.alert(
@@ -71,8 +71,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     return (
         <TouchableOpacity
             style={styles.card}
-            onPress={onView ? () => onView(producto) : undefined}
-            activeOpacity={onView ? 0.7 : 1}
+            onPress={onViewDetails ? () => onViewDetails(producto.id) : undefined}
+            activeOpacity={onViewDetails ? 0.7 : 1}
         >
             <View style={styles.imageContainer}>
                 {producto.imagenUrl ? (

@@ -1,3 +1,5 @@
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useState } from 'react';
 import {
     Alert,
@@ -9,9 +11,13 @@ import CustomHeader from '../../components/CustomHeader';
 import { ProductForm } from '../../components/producto/ProductForm';
 import { ProductList } from '../../components/producto/ProductList';
 import { productoService } from '../../services/productoService';
+import { CatalogStackParamList } from '../../types/navigation';
 import { ImagenLocal, ProductoImagenRequest, ProductoResponse } from '../../types/producto';
 
+type ProductManagementScreenNavigationProp = StackNavigationProp<CatalogStackParamList>;
+
 export default function ProductManagementScreen() {
+    const navigation = useNavigation<ProductManagementScreenNavigationProp>();
     const [showForm, setShowForm] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<ProductoResponse | null>(null);
     const [loading, setLoading] = useState(false);
@@ -97,6 +103,10 @@ export default function ProductManagementScreen() {
         setSelectedProduct(null);
     };
 
+    const handleViewProductDetails = (productId: number) => {
+        navigation.navigate('ProductoDetalle', { productId });
+    };
+
     return (
         <View style={styles.container}>
             <CustomHeader 
@@ -106,6 +116,7 @@ export default function ProductManagementScreen() {
             <View style={styles.content}>
                 <ProductList
                     onEditProduct={handleEditProduct}
+                    onViewDetails={handleViewProductDetails}
                     refreshTrigger={refreshTrigger}
                     onAddProduct={handleAddProduct}
                 />
