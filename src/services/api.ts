@@ -11,7 +11,7 @@ class ApiService {
     constructor() {
         this.api = axios.create({
             baseURL: this.baseURL,
-            timeout: 10000,
+            timeout: 30000, // Aumentar timeout para uploads de imágenes
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -24,6 +24,12 @@ class ApiService {
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
+                
+                // Si es FormData, remover el Content-Type para que axios lo maneje automáticamente
+                if (config.data && config.data instanceof FormData) {
+                    delete config.headers['Content-Type'];
+                }
+                
                 return config;
             },
             (error) => {
@@ -38,7 +44,6 @@ class ApiService {
                 if (error.response?.status === 401) {
                     // Token expirado o inválido
                     await StorageService.clearAuthData();
-                    // Aquí podrías redirigir al login
                 }
                 return Promise.reject(error);
             }

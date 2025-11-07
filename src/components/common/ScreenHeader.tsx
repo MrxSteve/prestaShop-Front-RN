@@ -3,24 +3,26 @@ import { DrawerActions, useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface CustomHeaderProps {
+interface ScreenHeaderProps {
     title: string;
     backgroundColor?: string;
-    rightActions?: React.ReactNode;
+    showMenuButton?: boolean;
     showBackButton?: boolean;
+    rightComponent?: React.ReactNode;
     onBackPress?: () => void;
 }
 
-export default function CustomHeader({
+export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
     title,
     backgroundColor = '#2196F3',
-    rightActions,
+    showMenuButton = true,
     showBackButton = false,
-    onBackPress
-}: CustomHeaderProps) {
+    rightComponent,
+    onBackPress,
+}) => {
     const navigation = useNavigation();
 
-    const toggleDrawer = () => {
+    const handleMenuPress = () => {
         navigation.dispatch(DrawerActions.toggleDrawer());
     };
 
@@ -34,26 +36,39 @@ export default function CustomHeader({
 
     return (
         <View style={[styles.header, { backgroundColor }]}>
-            <StatusBar barStyle="light-content" backgroundColor={backgroundColor} />
+            <StatusBar 
+                barStyle="light-content" 
+                backgroundColor={backgroundColor} 
+                translucent={false}
+            />
             <View style={styles.headerContent}>
-                <TouchableOpacity 
-                    style={styles.menuButton} 
-                    onPress={showBackButton ? handleBackPress : toggleDrawer}
-                >
-                    <Ionicons 
-                        name={showBackButton ? "arrow-back" : "menu"} 
-                        size={28} 
-                        color="#fff" 
-                    />
-                </TouchableOpacity>
+                {showMenuButton && (
+                    <TouchableOpacity 
+                        style={styles.actionButton} 
+                        onPress={handleMenuPress}
+                    >
+                        <Ionicons name="menu" size={28} color="#fff" />
+                    </TouchableOpacity>
+                )}
+                
+                {showBackButton && (
+                    <TouchableOpacity 
+                        style={styles.actionButton} 
+                        onPress={handleBackPress}
+                    >
+                        <Ionicons name="arrow-back" size={28} color="#fff" />
+                    </TouchableOpacity>
+                )}
+                
                 <Text style={styles.headerTitle}>{title}</Text>
+                
                 <View style={styles.headerRight}>
-                    {rightActions}
+                    {rightComponent || <View style={styles.placeholder} />}
                 </View>
             </View>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     header: {
@@ -68,11 +83,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        paddingTop: 45,
+        paddingTop: 45, // Para el notch/status bar
+        minHeight: 70,
     },
-    menuButton: {
+    actionButton: {
         padding: 8,
         marginRight: 16,
+        borderRadius: 20,
     },
     headerTitle: {
         flex: 1,
@@ -81,7 +98,10 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     headerRight: {
-        width: 44,
+        minWidth: 44,
         alignItems: 'flex-end',
+    },
+    placeholder: {
+        width: 44,
     },
 });

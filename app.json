@@ -40,7 +40,14 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "La aplicación necesita acceso a las fotos para permitir seleccionar imágenes de productos.",
+          "cameraPermission": "La aplicación necesita acceso a la cámara para tomar fotos de productos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
