@@ -6,11 +6,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AdminUsuariosYcuentasScreen from '../screens/admin/AdminUsuariosYCuentasScreen';
 import RolesManagementScreen from '../screens/admin/RolesManagementScreen';
 import UsuariorManagementScreen from '../screens/admin/UsuarioManagmentScreen';
+import RoleAssignmentScreen  from '../screens/admin/RoleAssignmentScreen';
 
 export type UsersStackParamList = {
   AdminUsuariosYcuentas: undefined;
   RoleManagement: undefined;
   UserManagement: undefined;
+  RoleAssignmentScreen: undefined;
 };
 
 const Stack = createNativeStackNavigator<UsersStackParamList>();
@@ -30,6 +32,10 @@ export default function UsersStackNavigator() {
         name="UserManagement"
         component={UsuariorManagementScreen}
       />
+      <Stack.Screen 
+      name="RoleAssignmentScreen"
+      component={RoleAssignmentScreen}
+       />
     </Stack.Navigator>
   );
 }

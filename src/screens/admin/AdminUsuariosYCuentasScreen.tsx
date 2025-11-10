@@ -37,6 +37,19 @@ export default function AdminUsuariosYcuentasScreen() {
         </View>
         <Ionicons name="chevron-forward" size={18} color="#999" />
       </TouchableOpacity>
+
+      {/**Card: Asignacion de roles */}
+     <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('RoleAssignmentScreen')}>
+      <View style={styles.iconWrap}>
+        <Ionicons name="people-circle-outline" size={28} color="#673AB7"/>
+      </View>
+      <View style={{flex: 1}}>
+        <Text style={styles.cardTitle}>Asignacion de Roles</Text>
+        <Text style={styles.cardSubtitle}>Asinga o retira roles a los usuarios registrados</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color="#888" />
+     </TouchableOpacity>
+
     </View>
   );
 }

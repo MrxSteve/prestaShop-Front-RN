@@ -15,11 +15,11 @@ import { usuarioService } from '@/src/services/usuarioServices';
 import UserCard from './UserCard';
 
 type Props = {
-  onCreate?: () => void;               
+  onCreate?: () => void;
   onEditUser: (u: UsuarioResponse) => void;
   onViewDetails: (u: UsuarioResponse) => void;
-  refreshTrigger?: number;     
-   onAssignRoles: (u: UsuarioResponse) => void;         
+  refreshTrigger?: number;
+  onAssignRoles: (u: UsuarioResponse) => void;
 };
 
 export default function UserList({
@@ -33,59 +33,80 @@ export default function UserList({
   const [items, setItems] = useState<UsuarioResponse[]>([]);
   const [page, setPage] = useState(0);
   const [lastPage, setLastPage] = useState(false);
+  const [tipoBusqueda, setTipoBusqueda] = useState<'NOMBRE' | 'EMAIL' | 'DUI' | 'ROL'>('NOMBRE');
   const [q, setQ] = useState('');
   const [estado, setEstado] = useState<UsuarioEstado | 'TODOS'>('TODOS');
 
   const load = async (reset = false) => {
-  try {
-    setLoading(true);
-    const p = reset ? 0 : page;
-    let res;
+    try {
+      setLoading(true);
+      const p = reset ? 0 : page;
+      let res: { content: UsuarioResponse[]; last: boolean };
 
-    const query = q.trim();
+      const query = q.trim();
 
-    if (query.length > 0) {
-      if (query.includes('@')) {
-        // 🔍 Buscar por email
-        const user = await usuarioService.buscarPorEmail(query);
-        res = { content: user ? [user] : [], last: true };
-      } else if (/^\d{8}-\d$/.test(query)) {
-        // 🔍 Buscar por DUI (formato 12345678-9)
-        const user = await usuarioService.buscarPorDui(query);
-        res = { content: user ? [user] : [], last: true };
+      if (query.length > 0) {
+        // 🔹 Si hay búsqueda activa, limpiamos resultados anteriores
+        setItems([]);
+
+        switch (tipoBusqueda) {
+          case 'EMAIL': {
+            const user = await usuarioService.buscarPorEmail(query);
+            res = { content: user ? [user] : [], last: true };
+            break;
+          }
+          case 'DUI': {
+            const user = await usuarioService.buscarPorDui(query);
+            res = { content: user ? [user] : [], last: true };
+            break;
+          }
+          case 'ROL': {
+            const list = await usuarioService.buscarPorRol(query, p, 10);
+            res = { content: list?.content || [], last: list?.last ?? true };
+            break;
+          }
+          default: {
+            res = await usuarioService.buscarPorNombre(query, p, 10);
+            break;
+          }
+        }
+
+        // 🔹 En búsquedas directas, reemplazamos el listado completo
+        setItems(res.content);
+      } else if (estado !== 'TODOS') {
+        // 🔹 Filtro por estado (usa paginación)
+        res = await usuarioService.buscarPorEstado(estado as UsuarioEstado, p, 10);
+        setItems(prev => (reset ? res.content : [...prev, ...res.content]));
       } else {
-        // 🔍 Buscar por nombre
-        res = await usuarioService.buscarPorNombre(query, p, 10);
+        // 🔹 Listado general (usa paginación)
+        res = await usuarioService.listar(p, 10);
+        setItems(prev => (reset ? res.content : [...prev, ...res.content]));
       }
-    } else if (estado !== 'TODOS') {
-      res = await usuarioService.buscarPorEstado(estado as UsuarioEstado, p, 10);
-    } else {
-      res = await usuarioService.listar(p, 10);
+
+      setPage(p + 1);
+      setLastPage(res?.last ?? true);
+    } catch (e) {
+      console.warn('Error loading users', e);
+      Alert.alert('Error', 'No se pudieron cargar los usuarios');
+    } finally {
+      setLoading(false);
     }
-
-    setItems(prev => (reset ? res.content : [...prev, ...res.content]));
-    setPage(p + 1);
-    setLastPage(res.last);
-  } catch (e) {
-    console.warn('Error loading users', e);
-    Alert.alert('Error', 'No se pudieron cargar los usuarios');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
-// 🔹 Ejecuta búsqueda automática al cambiar q o estado
-useEffect(() => {
-  const delayDebounce = setTimeout(() => {
-    setItems([]);
-    setPage(0);
-    setLastPage(false);
-    load(true);
-  }, 500); // medio segundo de espera (evita llamar en cada tecla)
 
-  return () => clearTimeout(delayDebounce);
-}, [estado, q, refreshTrigger]);
+
+  // 🔹 Ejecuta búsqueda automática al cambiar q o estado
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      setItems([]);
+      setPage(0);
+      setLastPage(false);
+      load(true);
+    }, 500); // medio segundo de espera (evita llamar en cada tecla)
+
+    return () => clearTimeout(delayDebounce);
+  }, [estado, q, refreshTrigger]);
 
   const onEnd = () => {
     if (loading || lastPage) return;
@@ -131,49 +152,74 @@ useEffect(() => {
 
 
 
- const Header = (
-  <View style={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6 }}>
-    {/* 🔹 Toolbar principal: buscador + botón Nuevo */}
-    <View style={styles.toolbarRow}>
-      <View style={styles.searchWrap}>
-        <Ionicons name="search" size={16} color="#777" />
-        <TextInput
-          style={styles.search}
-          placeholder="Buscar por nombre, email o DUI..."
-          placeholderTextColor="#9E9E9E"
-          value={q}
-          onChangeText={setQ}
-          onSubmitEditing={() => load(true)} // 👈 dispara la búsqueda manual
-        />
-        {q.length > 0 && (
-          <TouchableOpacity onPress={() => { setQ(''); load(true); }}>
-            <Ionicons name="close" size={16} color="#777" />
-          </TouchableOpacity>
-        )}
+  const Header = (
+    <View style={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6 }}>
+      {/* 🔹 Toolbar de búsqueda */}
+      <View style={styles.toolbarRow}>
+        <View style={[styles.searchWrap, { flex: 1 }]}>
+          <Ionicons name="search" size={16} color="#777" />
+          <TextInput
+            style={styles.search}
+            placeholder={`Buscar por ${tipoBusqueda.toLowerCase()}...`}
+            value={q}
+            onChangeText={setQ}
+            onSubmitEditing={() => load(true)} // 🔹 búsqueda limpia
+          />
+
+          {q.length > 0 && (
+            <TouchableOpacity onPress={() => { setQ(''); load(true); }}>
+              <Ionicons name="close" size={16} color="#777" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Botón de crear */}
+        <TouchableOpacity style={styles.addBtn} onPress={onCreate}>
+          <Ionicons name="person-add" size={16} color="#fff" />
+          <Text style={styles.addText}>Nuevo</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.addBtn} onPress={onCreate}>
-        <Ionicons name="person-add" size={16} color="#fff" />
-        <Text style={styles.addText}>Nuevo</Text>
-      </TouchableOpacity>
-    </View>
+      {/* 🔹 Selector de tipo de búsqueda */}
+      <View style={[styles.filtersWrap, { marginTop: 8 }]}>
+        {(['NOMBRE', 'EMAIL', 'DUI', 'ROL'] as const).map(opt => (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => setTipoBusqueda(opt)}
+            style={[
+              styles.filterChip,
+              tipoBusqueda === opt && styles.filterActive
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                tipoBusqueda === opt && styles.filterTextActive
+              ]}
+            >
+              {opt}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-    {/* 🔹 Filtros */}
-    <View style={styles.filtersWrap}>
-      {(['TODOS', 'ACTIVO', 'INACTIVO', 'SUSPENDIDO'] as const).map(opt => (
-        <TouchableOpacity
-          key={opt}
-          onPress={() => setEstado(opt)}
-          style={[styles.filterChip, estado === opt && styles.filterActive]}
-        >
-          <Text style={[styles.filterText, estado === opt && styles.filterTextActive]}>
-            {opt}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {/* 🔹 Filtros de estado */}
+      <View style={styles.filtersWrap}>
+        {(['TODOS', 'ACTIVO', 'INACTIVO', 'SUSPENDIDO'] as const).map(opt => (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => setEstado(opt)}
+            style={[styles.filterChip, estado === opt && styles.filterActive]}
+          >
+            <Text style={[styles.filterText, estado === opt && styles.filterTextActive]}>
+              {opt}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
-  </View>
-);
+  );
+
 
 
   return (
@@ -188,8 +234,7 @@ useEffect(() => {
           onDelete={handleDelete}
           onToggleEstado={handleToggleEstado}
           onSuspender={handleSuspender}
-          onAssignRoles={onAssignRoles}
-          onViewDetails={onViewDetails} 
+          onViewDetails={onViewDetails}
         />
       )}
       onEndReached={onEnd}
@@ -198,13 +243,13 @@ useEffect(() => {
         loading ? <ActivityIndicator style={{ margin: 16 }} /> : <View style={{ height: 8 }} />
       }
       contentContainerStyle={{
-        paddingTop: 10,         
+        paddingTop: 10,
         paddingBottom: 24,
         paddingHorizontal: 12,
         backgroundColor: '#f5f5f5',
       }}
     />
-    
+
   );
 }
 

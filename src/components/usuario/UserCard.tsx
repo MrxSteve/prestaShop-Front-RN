@@ -10,12 +10,11 @@ type Props = {
   onDelete: (u: UsuarioResponse) => void;
   onToggleEstado: (u: UsuarioResponse) => void; 
   onSuspender: (u: UsuarioResponse) => void;
-  onAssignRoles: (u: UsuarioResponse) => void;
   onViewDetails: (u: UsuarioResponse) => void;
 };
 
 export default function UserCard({
-  user, onEdit, onDelete, onToggleEstado, onSuspender, onAssignRoles, onViewDetails
+  user, onEdit, onDelete, onToggleEstado, onSuspender, onViewDetails
 }: Props) {
   const initials = user.nombreCompleto
     .split(' ')
@@ -83,9 +82,6 @@ export default function UserCard({
 
         {/* Acciones */}
         <View style={styles.actions}>
-          <TouchableOpacity style={[styles.iconBtn, styles.infoBtn]} onPress={() => onAssignRoles(user)} accessibilityLabel="Asignar roles">
-            <Ionicons name="people" size={18} color="#1976D2" />
-          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.iconBtn, styles.editBtn]}
             onPress={() => onEdit(user)}
