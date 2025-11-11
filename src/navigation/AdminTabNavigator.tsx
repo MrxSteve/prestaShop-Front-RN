@@ -6,9 +6,11 @@ import CustomHeader from '../components/CustomHeader';
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AdminReportesScreen from '../screens/admin/AdminReportesScreen';
 import AdminUsuariosYCuentasScreen from '../screens/admin/AdminUsuariosYCuentasScreen';
-import AdminVentasScreen from '../screens/admin/AdminVentasScreen';
 import { AdminTabParamList } from '../types/navigation';
 import CatalogStackNavigator from './CatalogStackNavigator';
+
+import VentasStackNavigator from './VentasStackNavigator';
+
 import UsersStackNavigator from './UsersStackNavigator';
 
 
@@ -30,10 +32,7 @@ const UsuariosYCuentasWithHeader = () => (
 );
 
 const VentasWithHeader = () => (
-  <View style={styles.container}>
-    <CustomHeader title="Gestión de Ventas" />
-    <AdminVentasScreen />
-  </View>
+  <VentasStackNavigator />
 );
 
 const CatalogoWithHeader = () => (
