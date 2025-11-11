@@ -13,6 +13,7 @@ import {
 import { MainNavigationTabs } from '../../components/reports/MainNavigationTabs';
 import { PlaceholderSection } from '../../components/reports/PlaceholderSection';
 import { ProductsReportsSection } from '../../components/reports/ProductsReportsSection';
+import { VentaReportsSection } from '../../components/reports/VentaReportsSection';
 import { productoService } from '../../services/productoService';
 import { CatalogStackParamList } from '../../types/navigation';
 import { ProductoResponse } from '../../types/producto';
@@ -24,6 +25,7 @@ const AdminReportesScreen: React.FC = () => {
     const navigation = useNavigation<AdminReportesScreenNavigationProp>();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [productos, setProductos] = useState<ProductoResponse[]>([]);
     const [mainSection, setMainSection] = useState<MainSection>('productos');
 
@@ -46,6 +48,7 @@ const AdminReportesScreen: React.FC = () => {
 
     const onRefresh = async () => {
         setRefreshing(true);
+        setRefreshTrigger(prev => prev + 1);
         await fetchData();
         setRefreshing(false);
     };
@@ -97,15 +100,13 @@ const AdminReportesScreen: React.FC = () => {
                 />
             )}
 
-            {/* Secciones placeholders para futuras implementaciones */}
             {mainSection === 'ventas' && (
-                <PlaceholderSection
-                    icon="card-outline"
-                    title="Reportes de Ventas"
-                    description="Próximamente: Análisis de ventas, tendencias, gráficos de ingresos y más."
+                <VentaReportsSection
+                    refreshTrigger={refreshTrigger}
                 />
             )}
 
+            {/* Secciones placeholders para futuras implementaciones */}
             {mainSection === 'abonos' && (
                 <PlaceholderSection
                     icon="wallet-outline"
