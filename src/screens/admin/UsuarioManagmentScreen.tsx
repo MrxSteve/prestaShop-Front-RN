@@ -46,10 +46,8 @@ export default function UsuariorManagementScreen() {
 
       <UserList
         onCreate={() => { setEditing(null); setShowWizard(true); }}
-        onEditUser={(u) => { setEditing(u); setShowWizard(true); }}
-        onViewDetails={onViewDetails}
+
         refreshTrigger={refresh}
-        onAssignRoles={handleAssignRoles} // 👈 nuevo
       />
 
 
@@ -61,7 +59,7 @@ export default function UsuariorManagementScreen() {
           setShowWizard(false);
           setRefresh((x) => x + 1);
         }}
-        userToEdit={editing}
+        
       />
 
       {/* Modal detalle */}

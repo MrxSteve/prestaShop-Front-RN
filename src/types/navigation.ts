@@ -50,6 +50,12 @@ export type RootStackParamList = {
     ClienteDrawer: NavigatorScreenParams<ClienteDrawerParamList>;
 };
 
+export type ClienteStackParamList = {
+  ClienteTabs: undefined;
+  ProductoDetalleCliente: { id: number };
+};
+
+
 // Screen Props Types
 export type AuthStackScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<
     AuthStackParamList,

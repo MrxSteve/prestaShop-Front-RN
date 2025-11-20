@@ -15,6 +15,7 @@ import {
 import { productoService } from '../../services/productoService';
 import { EstadoProducto, ProductoFiltros, ProductoResponse } from '../../types/producto';
 import { Pagination, PaginationInfo } from '../common/Pagination';
+import { CategoryFilter } from './CategoryFilter';
 import { ProductCard } from './ProductCard';
 
 const PRODUCTS_PER_PAGE = 10;
@@ -48,6 +49,7 @@ export const ProductList: React.FC<ProductListProps> = ({
     const [isSearching, setIsSearching] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState<ProductoFiltros>({});
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
     const fetchProducts = useCallback(async (pageNum: number = 0, refresh: boolean = false) => {
         try {
@@ -59,7 +61,14 @@ export const ProductList: React.FC<ProductListProps> = ({
             
             setError(null);
 
-            const response = await productoService.listarTodos(pageNum, PRODUCTS_PER_PAGE);
+            let response;
+            
+            // Si hay una categoría seleccionada, filtrar por categoría
+            if (selectedCategoryId) {
+                response = await productoService.obtenerPorCategoria(selectedCategoryId, pageNum, PRODUCTS_PER_PAGE);
+            } else {
+                response = await productoService.listarTodos(pageNum, PRODUCTS_PER_PAGE);
+            }
             
             setProducts(response.content);
             
@@ -78,11 +87,11 @@ export const ProductList: React.FC<ProductListProps> = ({
             setLoading(false);
             setRefreshing(false);
         }
-    }, []);
+    }, [selectedCategoryId]);
 
     const searchProductsByName = async (name: string, pageNum: number = 0) => {
         if (!name.trim()) {
-            // Si no hay búsqueda, volver a cargar todos
+            // Si no hay búsqueda, volver a cargar productos (respetando categoría seleccionada)
             setSearchQuery('');
             setIsSearching(false);
             setFilters({});
@@ -97,7 +106,15 @@ export const ProductList: React.FC<ProductListProps> = ({
             }
             setError(null);
 
+            // Al buscar por nombre, limpiar la categoría seleccionada
+            // ya que no tenemos endpoint para buscar por nombre Y categoría
+            if (selectedCategoryId !== null) {
+                setSelectedCategoryId(null);
+            }
+            
+            // Búsqueda global sin categoría
             const response = await productoService.buscarPorNombre(name.trim(), pageNum, PRODUCTS_PER_PAGE);
+            
             setProducts(response.content);
             setPaginationInfo({
                 currentPage: response.number,
@@ -119,6 +136,39 @@ export const ProductList: React.FC<ProductListProps> = ({
         } finally {
             setLoading(false);
             setIsSearching(false);
+        }
+    };
+
+    // Función específica para cargar productos por categoría con paginación
+    const fetchProductsByCategory = async (categoryId: number, pageNum: number = 0) => {
+        try {
+            if (pageNum === 0) {
+                setLoading(true);
+            }
+            setError(null);
+
+            const response = await productoService.obtenerPorCategoria(categoryId, pageNum, PRODUCTS_PER_PAGE);
+            
+            setProducts(response.content);
+            setPaginationInfo({
+                currentPage: response.number,
+                totalPages: response.totalPages,
+                totalElements: response.totalElements,
+                pageSize: response.size,
+            });
+            
+        } catch (error: any) {
+            console.error('Error fetching products by category:', error);
+            setError('Error al cargar productos de la categoría');
+            setProducts([]);
+            setPaginationInfo({
+                currentPage: 0,
+                totalPages: 0,
+                totalElements: 0,
+                pageSize: PRODUCTS_PER_PAGE,
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -168,8 +218,20 @@ export const ProductList: React.FC<ProductListProps> = ({
     const clearFilters = () => {
         setFilters({});
         setSearchQuery('');
+        setSelectedCategoryId(null); // Limpiar categoría seleccionada también
         setShowFilters(false);
         fetchProducts(0, true);
+    };
+
+    // Función para manejar cambio de categoría
+    const handleCategorySelect = async (categoryId: number | null) => {
+        setSelectedCategoryId(categoryId);
+        setSearchQuery(''); // Limpiar búsqueda al cambiar categoría
+        setFilters({}); // Limpiar otros filtros
+        setIsSearching(false);
+        
+        // Cargar productos de la nueva categoría
+        await fetchProducts(0, true);
     };
 
     const handleSearchInput = (text: string) => {
@@ -202,14 +264,18 @@ export const ProductList: React.FC<ProductListProps> = ({
     };
 
     const handlePageChange = (page: number) => {
+        // Función unificada que maneja paginación para todos los casos
         if (searchQuery.trim()) {
             // Si hay búsqueda activa, usar búsqueda paginada
             searchProductsByName(searchQuery.trim(), page);
+        } else if (selectedCategoryId !== null) {
+            // Si hay categoría seleccionada (sin búsqueda), usar paginación por categoría
+            fetchProductsByCategory(selectedCategoryId, page);
         } else if (Object.keys(filters).length > 0) {
             // Si hay filtros activos, usar filtros paginados
             applyFilters(page);
         } else {
-            // Sin búsqueda ni filtros, paginación normal
+            // Sin búsqueda, categoría ni filtros, paginación normal
             fetchProducts(page);
         }
     };
@@ -271,7 +337,7 @@ export const ProductList: React.FC<ProductListProps> = ({
         );
     }
 
-    const hasActiveFilters = searchQuery.trim() || Object.keys(filters).length > 0;
+    const hasActiveFilters = searchQuery.trim() || Object.keys(filters).length > 0 || selectedCategoryId !== null;
 
     return (
         <View style={styles.container}>
@@ -281,7 +347,7 @@ export const ProductList: React.FC<ProductListProps> = ({
                     <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder="Buscar producto por nombre..."
+                        placeholder="Buscar producto por nombre (búsqueda global)..."
                         value={searchQuery}
                         onChangeText={handleSearchInput}
                         returnKeyType="search"
@@ -317,6 +383,12 @@ export const ProductList: React.FC<ProductListProps> = ({
                     <Ionicons name="refresh" size={20} color="#4CAF50" />
                 </TouchableOpacity>
             </View>
+
+            {/* Filtro de categorías */}
+            <CategoryFilter
+                selectedCategoryId={selectedCategoryId}
+                onCategorySelect={handleCategorySelect}
+            />
 
             {/* Panel de filtros */}
             {showFilters && (
@@ -403,8 +475,8 @@ export const ProductList: React.FC<ProductListProps> = ({
                 showsVerticalScrollIndicator={false}
             />
             
-            {/* Componente de paginación */}
-            {!hasActiveFilters && paginationInfo.totalPages > 1 && (
+            {/* Componente de paginación - siempre mostrar si hay más de una página */}
+            {paginationInfo.totalPages > 1 && (
                 <Pagination
                     paginationInfo={paginationInfo}
                     onPageChange={handlePageChange}
@@ -509,7 +581,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     filterPicker: {
-        height: 40,
+        height: 55,
     },
     filterActions: {
         flexDirection: 'row',
