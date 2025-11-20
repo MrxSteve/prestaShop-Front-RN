@@ -16,10 +16,15 @@ export type CatalogStackParamList = {
     EditarProducto: { producto: import('./catalog').ProductoResponse };
 };
 
+export type VentasStackParamList = {
+    VentasMain: undefined;
+    VentaDetalle: { ventaId: number };
+};
+
 export type AdminTabParamList = {
     Dashboard: undefined;
     UsuariosYCuentas: undefined;
-    Ventas: undefined;
+    Ventas: NavigatorScreenParams<VentasStackParamList>;
     Catalogo: NavigatorScreenParams<CatalogStackParamList>;
     Reportes: undefined;
 };
@@ -64,6 +69,11 @@ export type AuthStackScreenProps<T extends keyof AuthStackParamList> = NativeSta
 
 export type CatalogStackScreenProps<T extends keyof CatalogStackParamList> = NativeStackScreenProps<
     CatalogStackParamList,
+    T
+>;
+
+export type VentasStackScreenProps<T extends keyof VentasStackParamList> = NativeStackScreenProps<
+    VentasStackParamList,
     T
 >;
 
