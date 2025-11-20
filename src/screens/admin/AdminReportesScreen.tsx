@@ -99,6 +99,14 @@ const AdminReportesScreen: React.FC = () => {
                     refreshTrigger={refreshing}
                 />
             )}
+            {/* Secciones placeholders para futuras implementaciones */}
+            {mainSection === 'ventas' && (
+                <PlaceholderSection
+                    icon="card-outline"
+                    title="Reportes de Ventas"
+                    description="Próximamente: Análisis de ventas, tendencias, gráficos de ingresos y más."
+                />
+            )}
 
             {mainSection === 'ventas' && (
                 <VentaReportsSection

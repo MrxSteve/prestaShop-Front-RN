@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import UserFormWizard from '@/src/components/usuario/UserFormWizard';
 import UserList from '@/src/components/usuario/UserList';
 import UserDetailModal from '@/src/components/usuario/UserDetailModal';
 import { UsuarioResponse } from '@/src/types/usuario';
+
 import UserRolesModal from '@/src/components/usuario/UserRolesModal';
 
 export default function UsuariorManagementScreen() {
@@ -16,6 +17,7 @@ export default function UsuariorManagementScreen() {
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [rolesModalVisible, setRolesModalVisible] = useState(false);
+
   const [selectedUser, setSelectedUser] = useState<UsuarioResponse | null>(null);
 
   const navigation = useNavigation<any>();
@@ -30,6 +32,8 @@ export default function UsuariorManagementScreen() {
     setRolesModalVisible(true);
   };
 
+ 
+
   return (
     <View style={styles.container}>
       {/* Barra simple con botón atrás y título */}
@@ -42,10 +46,8 @@ export default function UsuariorManagementScreen() {
 
       <UserList
         onCreate={() => { setEditing(null); setShowWizard(true); }}
-        onEditUser={(u) => { setEditing(u); setShowWizard(true); }}
-        onViewDetails={onViewDetails}
+
         refreshTrigger={refresh}
-        onAssignRoles={handleAssignRoles} // 👈 nuevo
       />
 
 
@@ -57,7 +59,7 @@ export default function UsuariorManagementScreen() {
           setShowWizard(false);
           setRefresh((x) => x + 1);
         }}
-        userToEdit={editing}
+        
       />
 
       {/* Modal detalle */}

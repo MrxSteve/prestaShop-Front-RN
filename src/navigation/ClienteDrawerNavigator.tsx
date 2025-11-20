@@ -6,6 +6,7 @@ import { CustomHeader } from '../components';
 import { useAuth } from '../context/AuthContext';
 import { ClienteDrawerParamList } from '../types/navigation';
 import ClienteTabNavigator from './ClienteTabNavigator';
+import ClienteStackNavigator from './ClienteStackNavigator';
 
 const Drawer = createDrawerNavigator<ClienteDrawerParamList>();
 
@@ -139,7 +140,7 @@ export default function ClienteDrawerNavigator() {
     >
       <Drawer.Screen
         name="ClienteTabs"
-        component={ClienteTabNavigator}
+        component={ClienteStackNavigator}
         options={{
           title: '🏠 Inicio',
           drawerIcon: ({ color, size }: { color: string; size: number }) => (

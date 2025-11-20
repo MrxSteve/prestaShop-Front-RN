@@ -15,9 +15,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
 import {
   CreateUsuarioRequest,
-  UpdateUsuarioRequest,
   UsuarioEstado,
-  UsuarioResponse,
 } from '../../types/usuario';
 import { rolesService } from '../../services/rolServices';
 import { usuarioService } from '../../services/usuarioServices';
@@ -27,7 +25,6 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   onCreated?: () => void;
-  userToEdit?: UsuarioResponse | null;
 };
 
 type FormStep1 = {
@@ -37,15 +34,13 @@ type FormStep1 = {
   telefono: string;
   direccion: string;
   dui: string;
-  fechaNacimiento: string; // YYYY-MM-DD
+  fechaNacimiento: string;
   estado: UsuarioEstado;
 };
 
-export default function UserFormWizard({ visible, onClose, onCreated, userToEdit }: Props) {
+export default function UserFormWizard({ visible, onClose, onCreated }: Props) {
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
-
-  // Paso 2: roles
   const [askAssignRole, setAskAssignRole] = useState<boolean>(true);
   const [roles, setRoles] = useState<RolResponse[]>([]);
   const [rolesSelected, setRolesSelected] = useState<number[]>([]);
@@ -69,55 +64,21 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
     },
   });
 
-  // Cargar roles y precargar datos cuando se abre el modal
   useEffect(() => {
     if (!visible) return;
-
     setStep(1);
     setAskAssignRole(true);
     setRolesSelected([]);
-
-    // Precarga si se está editando
-    if (userToEdit) {
-      reset({
-        nombreCompleto: userToEdit.nombreCompleto || '',
-        email: userToEdit.email || '',
-        password: '', // nunca se rellena
-        telefono: userToEdit.telefono || '',
-        direccion: userToEdit.direccion || '',
-        dui: userToEdit.dui || '',
-        fechaNacimiento: userToEdit.fechaNacimiento || '',
-        estado: userToEdit.estado || 'ACTIVO',
-      });
-
-      // Si vienen roles en la respuesta, los preseleccionamos
-      const pre = Array.isArray((userToEdit as any).roles)
-        ? (userToEdit as any).roles.map((r: any) => Number(r.id)).filter(Boolean)
-        : [];
-      setRolesSelected(pre);
-    } else {
-      reset({
-        nombreCompleto: '',
-        email: '',
-        password: '',
-        telefono: '',
-        direccion: '',
-        dui: '',
-        fechaNacimiento: '',
-        estado: 'ACTIVO',
-      });
-    }
-
+    reset();
     loadRoles();
-  }, [visible, userToEdit, reset]);
+  }, [visible, reset]);
 
   const loadRoles = async () => {
     try {
       setLoadingRoles(true);
       const data = await rolesService.listarTodosSinPaginacion();
       setRoles(data || []);
-    } catch (e) {
-      console.warn('Error cargando roles', e);
+    } catch {
       setRoles([]);
     } finally {
       setLoadingRoles(false);
@@ -133,86 +94,38 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
   const goNext = () => setStep(2);
   const goBack = () => setStep(1);
 
-  const isEditing = !!userToEdit;
-
   const submitAll = async (data: FormStep1) => {
     try {
       setLoading(true);
+      const payload: CreateUsuarioRequest = {
+        nombreCompleto: data.nombreCompleto.trim(),
+        email: data.email.trim(),
+        password: data.password.trim(),
+        telefono: data.telefono.trim(),
+        direccion: data.direccion.trim(),
+        dui: data.dui.trim(),
+        fechaNacimiento: data.fechaNacimiento.trim(),
+        estado: data.estado,
+        rolesIds: askAssignRole ? rolesSelected : [],
+      };
 
-      if (isEditing && userToEdit) {
-        // Actualizar
-        const updatePayload: UpdateUsuarioRequest = {
-          nombreCompleto: data.nombreCompleto.trim(),
-          email: data.email.trim(),
-          telefono: data.telefono.trim(),
-          direccion: data.direccion.trim(),
-          dui: data.dui.trim(),
-          fechaNacimiento: data.fechaNacimiento.trim(),
-          estado: data.estado,
-          ...(data.password?.trim()
-            ? { password: data.password.trim() }
-            : {}),
-        };
-
-        await usuarioService.actualizar(userToEdit.id, updatePayload);
-
-        // Asignar roles seleccionados (simple: sólo asigna; para sincronizar perfecto habría que remover los no seleccionados)
-        if (askAssignRole && rolesSelected.length > 0) {
-          // intenta asignar cada uno (el backend debería ignorar duplicados)
-          for (const rid of rolesSelected) {
-            try {
-              await usuarioService.asignarRol(userToEdit.id, rid);
-            } catch (err) {
-              // ignoramos errores individuales de rol para no bloquear
-              console.warn('Error asignando rol', rid, err);
-            }
-          }
-        }
-
-        Alert.alert('Éxito', 'Usuario actualizado correctamente');
-      } else {
-        // Crear
-        const payload: CreateUsuarioRequest = {
-          nombreCompleto: data.nombreCompleto.trim(),
-          email: data.email.trim(),
-          password: data.password.trim(),
-          telefono: data.telefono.trim(),
-          direccion: data.direccion.trim(),
-          dui: data.dui.trim(),
-          fechaNacimiento: data.fechaNacimiento.trim(),
-          estado: data.estado,
-          rolesIds: askAssignRole ? rolesSelected : [],
-        };
-
-        await usuarioService.crear(payload);
-        console.log('➡️ Payload enviado:', JSON.stringify(payload, null, 2));
-
-        Alert.alert('Éxito', 'Usuario creado correctamente');
-      }
+      await usuarioService.crear(payload);
+      Alert.alert('Éxito', 'Usuario creado correctamente');
 
       reset();
       onClose();
       onCreated?.();
     } catch (err: any) {
-      console.error(isEditing ? 'Error actualizando usuario:' : 'Error creando usuario:', err);
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        (isEditing ? 'No se pudo actualizar el usuario' : 'No se pudo crear el usuario');
-      Alert.alert('Error', msg);
+      console.error(err);
+      Alert.alert('Error', err?.response?.data?.message || 'No se pudo crear el usuario');
     } finally {
       setLoading(false);
     }
   };
 
   const headerTitle = useMemo(
-    () =>
-      step === 1
-        ? isEditing
-          ? 'Editar Usuario'
-          : 'Nuevo Usuario'
-        : 'Asignación de Rol (opcional)',
-    [step, isEditing]
+    () => (step === 1 ? 'Nuevo Usuario' : 'Asignación de Rol (opcional)'),
+    [step]
   );
 
   return (
@@ -232,7 +145,10 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
                 <Controller
                   control={control}
                   name="nombreCompleto"
-                  rules={{ required: 'Requerido', minLength: { value: 3, message: 'Mínimo 3 caracteres' } }}
+                  rules={{
+                    required: 'Requerido',
+                    minLength: { value: 3, message: 'Mínimo 3 caracteres' },
+                  }}
                   render={({ field: { onChange, value } }) => (
                     <TextInput
                       style={[styles.input, errors.nombreCompleto && styles.inputError]}
@@ -265,15 +181,14 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
                 />
               </Field>
 
-              <Field label={isEditing ? 'Contraseña (opcional)' : 'Contraseña *'} error={errors.password?.message}>
+              <Field label="Contraseña *" error={errors.password?.message}>
                 <Controller
                   control={control}
                   name="password"
-                  rules={
-                    isEditing
-                      ? undefined
-                      : { required: 'Requerido', minLength: { value: 6, message: 'Mínimo 6 caracteres' } }
-                  }
+                  rules={{
+                    required: 'Requerido',
+                    minLength: { value: 6, message: 'Mínimo 6 caracteres' },
+                  }}
                   render={({ field: { onChange, value } }) => (
                     <TextInput
                       style={[styles.input, errors.password && styles.inputError]}
@@ -335,13 +250,19 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
                 />
               </Field>
 
-              <Field label="Fecha de nacimiento * (YYYY-MM-DD)" error={errors.fechaNacimiento?.message}>
+              <Field
+                label="Fecha de nacimiento * (YYYY-MM-DD)"
+                error={errors.fechaNacimiento?.message}
+              >
                 <Controller
                   control={control}
                   name="fechaNacimiento"
                   rules={{
                     required: 'Requerido',
-                    pattern: { value: /^\d{4}-\d{2}-\d{2}$/, message: 'Formato YYYY-MM-DD' },
+                    pattern: {
+                      value: /^\d{4}-\d{2}-\d{2}$/,
+                      message: 'Formato YYYY-MM-DD',
+                    },
                   }}
                   render={({ field: { onChange, value } }) => (
                     <TextInput
@@ -366,7 +287,14 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
                           style={[styles.chip, value === opt && styles.chipActive]}
                           onPress={() => onChange(opt)}
                         >
-                          <Text style={[styles.chipText, value === opt && styles.chipTextActive]}>{opt}</Text>
+                          <Text
+                            style={[
+                              styles.chipText,
+                              value === opt && styles.chipTextActive,
+                            ]}
+                          >
+                            {opt}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -399,7 +327,11 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
                             onPress={() => toggleRole(Number(r.id))}
                           >
                             <View style={styles.roleIcon}>
-                              <Ionicons name="extension-puzzle-outline" size={18} color="#FF9800" />
+                              <Ionicons
+                                name="extension-puzzle-outline"
+                                size={18}
+                                color="#FF9800"
+                              />
                             </View>
                             <View style={{ flex: 1 }}>
                               <Text style={styles.roleName}>{r.nombre}</Text>
@@ -422,11 +354,19 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
 
           <View style={styles.footer}>
             {step === 2 ? (
-              <TouchableOpacity style={[styles.btn, styles.secondary]} onPress={goBack} disabled={loading}>
+              <TouchableOpacity
+                style={[styles.btn, styles.secondary]}
+                onPress={goBack}
+                disabled={loading}
+              >
                 <Text style={styles.secondaryText}>Atrás</Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={[styles.btn, styles.secondary]} onPress={onClose} disabled={loading}>
+              <TouchableOpacity
+                style={[styles.btn, styles.secondary]}
+                onPress={onClose}
+                disabled={loading}
+              >
                 <Text style={styles.secondaryText}>Cancelar</Text>
               </TouchableOpacity>
             )}
@@ -451,7 +391,7 @@ export default function UserFormWizard({ visible, onClose, onCreated, userToEdit
                 ) : (
                   <>
                     <Ionicons name="checkmark" size={18} color="#fff" style={{ marginRight: 6 }} />
-                    <Text style={styles.primaryText}>{isEditing ? 'Guardar cambios' : 'Crear usuario'}</Text>
+                    <Text style={styles.primaryText}>Crear usuario</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -485,28 +425,38 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   title: { fontSize: 18, fontWeight: '700', color: '#333' },
   closeBtn: { padding: 6 },
-
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, backgroundColor: '#fff' },
   inputError: { borderColor: '#F44336' },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 6 },
   error: { color: '#F44336', fontSize: 12, marginTop: 4 },
-
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: '#ccc' },
   chipActive: { backgroundColor: '#E3F2FD', borderColor: '#2196F3' },
   chipText: { color: '#555', fontWeight: '600' },
   chipTextActive: { color: '#2196F3' },
-
   assignHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   loadingWrap: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
   roleItem: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12,
-    padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#eee'
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
   },
-  roleIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFF3E0', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  roleIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFF3E0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
   roleName: { fontSize: 15, fontWeight: '700', color: '#333' },
   roleId: { fontSize: 12, color: '#888', marginTop: 2 },
-
   footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 8 },
   btn: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 14 },
   secondary: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' },
