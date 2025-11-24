@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React from 'react';
 import {
     ActivityIndicator,
-    Image,
     ScrollView,
     StyleSheet,
     Text,
@@ -31,21 +30,6 @@ export const VentaDetalle: React.FC<VentaDetalleProps> = ({
     actionLoading = false,
     showActions = true,
 }) => {
-    const [imageLoadingStates, setImageLoadingStates] = useState<{[key: number]: boolean}>({});
-    const [imageErrorStates, setImageErrorStates] = useState<{[key: number]: boolean}>({});
-
-    const handleImageLoadStart = (detalleId: number) => {
-        setImageLoadingStates(prev => ({...prev, [detalleId]: true}));
-    };
-
-    const handleImageLoadEnd = (detalleId: number) => {
-        setImageLoadingStates(prev => ({...prev, [detalleId]: false}));
-    };
-
-    const handleImageError = (detalleId: number) => {
-        setImageLoadingStates(prev => ({...prev, [detalleId]: false}));
-        setImageErrorStates(prev => ({...prev, [detalleId]: true}));
-    };
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('es-ES', {
             style: 'currency',
@@ -193,37 +177,6 @@ export const VentaDetalle: React.FC<VentaDetalleProps> = ({
                     <View style={styles.productosContainer}>
                         {venta.detalleVentas.map((detalle, index) => (
                             <View key={detalle.id} style={styles.productoCard}>
-                                <View style={styles.productoImageContainer}>
-                                    {detalle.imagenUrl ? (
-                                        <>
-                                            {imageLoadingStates[detalle.id] && (
-                                                <View style={styles.imageLoadingOverlay}>
-                                                    <ActivityIndicator size="small" color="#6C5CE7" />
-                                                </View>
-                                            )}
-                                            {!imageErrorStates[detalle.id] ? (
-                                                <Image 
-                                                    source={{ uri: detalle.imagenUrl }} 
-                                                    style={styles.productoImage}
-                                                    resizeMode="cover"
-                                                    onLoadStart={() => handleImageLoadStart(detalle.id)}
-                                                    onLoadEnd={() => handleImageLoadEnd(detalle.id)}
-                                                    onError={() => handleImageError(detalle.id)}
-                                                />
-                                            ) : (
-                                                <View style={styles.productoImagePlaceholder}>
-                                                    <Ionicons name="image-outline" size={20} color="#ccc" />
-                                                    <Text style={styles.errorImageText}>Error</Text>
-                                                </View>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <View style={styles.productoImagePlaceholder}>
-                                            <Ionicons name="cube" size={20} color="#999" />
-                                            <Text style={styles.noImageText}>Sin imagen</Text>
-                                        </View>
-                                    )}
-                                </View>
                                 <View style={styles.productoInfo}>
                                     <Text style={styles.productoNombre} numberOfLines={2}>
                                         {detalle.nombreProducto}
@@ -487,52 +440,11 @@ const styles = StyleSheet.create({
     productoCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
+        padding: 16,
         backgroundColor: '#f8f9fa',
         borderRadius: 12,
         borderWidth: 1,
         borderColor: '#e9ecef',
-    },
-    productoImageContainer: {
-        width: 60,
-        height: 60,
-        borderRadius: 8,
-        marginRight: 12,
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    productoImage: {
-        width: '100%',
-        height: '100%',
-    },
-    productoImagePlaceholder: {
-        width: '100%',
-        height: '100%',
-        backgroundColor: '#e9ecef',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imageLoadingOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1,
-    },
-    errorImageText: {
-        fontSize: 10,
-        color: '#ccc',
-        marginTop: 2,
-    },
-    noImageText: {
-        fontSize: 9,
-        color: '#999',
-        marginTop: 2,
-        textAlign: 'center',
     },
     productoInfo: {
         flex: 1,
