@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
         borderColor: '#e0e0e0',
     },
     picker: {
-        height: 45,
+        height: 55,
         color: '#333',
     },
     centerContainer: {

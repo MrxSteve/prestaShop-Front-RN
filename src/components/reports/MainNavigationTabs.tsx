@@ -19,8 +19,6 @@ const tabs: TabItem[] = [
     { key: 'productos', label: 'Productos', icon: 'cube-outline' },
     { key: 'ventas', label: 'Ventas', icon: 'card-outline' },
     { key: 'abonos', label: 'Abonos', icon: 'wallet-outline' },
-    { key: 'usuarios', label: 'Usuarios', icon: 'people-outline' },
-    { key: 'cuentas', label: 'Cuentas', icon: 'folder-outline' },
     { key: 'movimientos', label: 'Movimientos', icon: 'swap-horizontal-outline' },
 ];
 

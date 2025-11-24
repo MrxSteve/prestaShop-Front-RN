@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import React, { useCallback, useState } from 'react';
 import {
@@ -20,7 +21,7 @@ interface VentaSearchViewProps {
     refreshTrigger?: number;
 }
 
-type SearchType = 'fecha' | 'monto' | 'tipo' | 'estado';
+type SearchType = 'fecha' | 'monto' | 'tipo' | 'estado' | 'cuentaCliente' | 'cuentaClienteYFecha' | 'cuentaClienteYEstado';
 
 export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
     refreshTrigger = 0
@@ -39,9 +40,11 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
     const [searchType, setSearchType] = useState<SearchType>('fecha');
     const [hasSearched, setHasSearched] = useState(false);
 
-    // Fecha search
-    const [fechaInicio, setFechaInicio] = useState('');
-    const [fechaFin, setFechaFin] = useState('');
+    // Fecha search con DateTimePicker
+    const [fechaInicio, setFechaInicio] = useState<Date>(new Date());
+    const [fechaFin, setFechaFin] = useState<Date>(new Date());
+    const [showFechaInicioPicker, setShowFechaInicioPicker] = useState(false);
+    const [showFechaFinPicker, setShowFechaFinPicker] = useState(false);
 
     // Monto search
     const [montoMin, setMontoMin] = useState('');
@@ -50,6 +53,9 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
     // Tipo y estado search
     const [tipoVenta, setTipoVenta] = useState<TipoVenta | ''>('');
     const [estadoVenta, setEstadoVenta] = useState<EstadoVenta | ''>('');
+
+    // Cuenta cliente search
+    const [cuentaClienteId, setCuentaClienteId] = useState('');
 
     const searchVentas = useCallback(async (pageNum: number = 0) => {
         if (!canSearch()) return;
@@ -62,9 +68,9 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
             
             switch (searchType) {
                 case 'fecha':
-                    if (fechaInicio && fechaFin) {
-                        response = await ventaService.buscarPorFecha(fechaInicio, fechaFin, pageNum, VENTAS_PER_PAGE);
-                    }
+                    const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
+                    const fechaFinStr = fechaFin.toISOString().split('T')[0];
+                    response = await ventaService.buscarPorFecha(fechaInicioStr, fechaFinStr, pageNum, VENTAS_PER_PAGE);
                     break;
                 case 'monto':
                     if (montoMin && montoMax) {
@@ -86,6 +92,34 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
                         response = await ventaService.buscarPorEstado(estadoVenta, pageNum, VENTAS_PER_PAGE);
                     }
                     break;
+                case 'cuentaCliente':
+                    if (cuentaClienteId) {
+                        response = await ventaService.ventasPorCuentaCliente(parseInt(cuentaClienteId), pageNum, VENTAS_PER_PAGE);
+                    }
+                    break;
+                case 'cuentaClienteYFecha':
+                    if (cuentaClienteId) {
+                        const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
+                        const fechaFinStr = fechaFin.toISOString().split('T')[0];
+                        response = await ventaService.ventasPorCuentaClienteYFecha(
+                            parseInt(cuentaClienteId), 
+                            fechaInicioStr, 
+                            fechaFinStr, 
+                            pageNum, 
+                            VENTAS_PER_PAGE
+                        );
+                    }
+                    break;
+                case 'cuentaClienteYEstado':
+                    if (cuentaClienteId && estadoVenta) {
+                        response = await ventaService.ventasPorCuentaClienteYEstado(
+                            parseInt(cuentaClienteId), 
+                            estadoVenta, 
+                            pageNum, 
+                            VENTAS_PER_PAGE
+                        );
+                    }
+                    break;
             }
 
             if (response) {
@@ -105,12 +139,12 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
         } finally {
             setLoading(false);
         }
-    }, [searchType, fechaInicio, fechaFin, montoMin, montoMax, tipoVenta, estadoVenta]);
+    }, [searchType, fechaInicio, fechaFin, montoMin, montoMax, tipoVenta, estadoVenta, cuentaClienteId]);
 
     const canSearch = () => {
         switch (searchType) {
             case 'fecha':
-                return fechaInicio.trim() && fechaFin.trim();
+                return true; // fechaInicio y fechaFin siempre tienen valores (Date objects)
             case 'monto':
                 return montoMin.trim() && montoMax.trim() && 
                        !isNaN(parseFloat(montoMin)) && !isNaN(parseFloat(montoMax));
@@ -118,6 +152,12 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
                 return tipoVenta !== '';
             case 'estado':
                 return estadoVenta !== '';
+            case 'cuentaCliente':
+                return cuentaClienteId.trim() && !isNaN(parseInt(cuentaClienteId));
+            case 'cuentaClienteYFecha':
+                return cuentaClienteId.trim() && !isNaN(parseInt(cuentaClienteId));
+            case 'cuentaClienteYEstado':
+                return cuentaClienteId.trim() && !isNaN(parseInt(cuentaClienteId)) && estadoVenta !== '';
             default:
                 return false;
         }
@@ -130,12 +170,13 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
     };
 
     const handleClear = () => {
-        setFechaInicio('');
-        setFechaFin('');
+        setFechaInicio(new Date());
+        setFechaFin(new Date());
         setMontoMin('');
         setMontoMax('');
         setTipoVenta('');
         setEstadoVenta('');
+        setCuentaClienteId('');
         setVentas([]);
         setHasSearched(false);
         setError(null);
@@ -215,20 +256,28 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
             <View style={styles.searchTypeContainer}>
                 <Text style={styles.label}>Buscar por:</Text>
                 <View style={styles.searchTypeButtons}>
-                    {(['fecha', 'monto', 'tipo', 'estado'] as SearchType[]).map((type) => (
+                    {[
+                        { key: 'fecha', label: 'Fecha' },
+                        { key: 'monto', label: 'Monto' },
+                        { key: 'tipo', label: 'Tipo' },
+                        { key: 'estado', label: 'Estado' },
+                        { key: 'cuentaCliente', label: 'Cuenta Cliente' },
+                        { key: 'cuentaClienteYFecha', label: 'Cliente + Fecha' },
+                        { key: 'cuentaClienteYEstado', label: 'Cliente + Estado' }
+                    ].map((type) => (
                         <TouchableOpacity
-                            key={type}
+                            key={type.key}
                             style={[
                                 styles.searchTypeButton,
-                                searchType === type && styles.searchTypeButtonActive
+                                searchType === type.key && styles.searchTypeButtonActive
                             ]}
-                            onPress={() => setSearchType(type)}
+                            onPress={() => setSearchType(type.key as SearchType)}
                         >
                             <Text style={[
                                 styles.searchTypeButtonText,
-                                searchType === type && styles.searchTypeButtonTextActive
+                                searchType === type.key && styles.searchTypeButtonTextActive
                             ]}>
-                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                                {type.label}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -241,21 +290,164 @@ export const VentaSearchView: React.FC<VentaSearchViewProps> = ({
                     <View style={styles.inputRow}>
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>Fecha Inicio:</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={fechaInicio}
-                                onChangeText={setFechaInicio}
-                                placeholder="YYYY-MM-DD"
-                            />
+                            <TouchableOpacity
+                                style={styles.dateButton}
+                                onPress={() => setShowFechaInicioPicker(true)}
+                            >
+                                <Text style={styles.dateButtonText}>
+                                    {fechaInicio.toLocaleDateString('es-ES')}
+                                </Text>
+                                <Ionicons name="calendar" size={20} color="#666" />
+                            </TouchableOpacity>
+                            {showFechaInicioPicker && (
+                                <DateTimePicker
+                                    value={fechaInicio}
+                                    mode="date"
+                                    display="default"
+                                    onChange={(event, selectedDate) => {
+                                        setShowFechaInicioPicker(false);
+                                        if (selectedDate) {
+                                            setFechaInicio(selectedDate);
+                                        }
+                                    }}
+                                />
+                            )}
                         </View>
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>Fecha Fin:</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={fechaFin}
-                                onChangeText={setFechaFin}
-                                placeholder="YYYY-MM-DD"
-                            />
+                            <TouchableOpacity
+                                style={styles.dateButton}
+                                onPress={() => setShowFechaFinPicker(true)}
+                            >
+                                <Text style={styles.dateButtonText}>
+                                    {fechaFin.toLocaleDateString('es-ES')}
+                                </Text>
+                                <Ionicons name="calendar" size={20} color="#666" />
+                            </TouchableOpacity>
+                            {showFechaFinPicker && (
+                                <DateTimePicker
+                                    value={fechaFin}
+                                    mode="date"
+                                    display="default"
+                                    onChange={(event, selectedDate) => {
+                                        setShowFechaFinPicker(false);
+                                        if (selectedDate) {
+                                            setFechaFin(selectedDate);
+                                        }
+                                    }}
+                                />
+                            )}
+                        </View>
+                    </View>
+                </View>
+            )}
+
+            {(searchType === 'cuentaClienteYFecha') && (
+                <View style={styles.formSection}>
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>ID Cuenta Cliente:</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={cuentaClienteId}
+                            onChangeText={setCuentaClienteId}
+                            placeholder="Ingrese ID de cuenta cliente"
+                            keyboardType="numeric"
+                        />
+                    </View>
+                    <View style={styles.inputRow}>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Fecha Inicio:</Text>
+                            <TouchableOpacity
+                                style={styles.dateButton}
+                                onPress={() => setShowFechaInicioPicker(true)}
+                            >
+                                <Text style={styles.dateButtonText}>
+                                    {fechaInicio.toLocaleDateString('es-ES')}
+                                </Text>
+                                <Ionicons name="calendar" size={20} color="#666" />
+                            </TouchableOpacity>
+                            {showFechaInicioPicker && (
+                                <DateTimePicker
+                                    value={fechaInicio}
+                                    mode="date"
+                                    display="default"
+                                    onChange={(event, selectedDate) => {
+                                        setShowFechaInicioPicker(false);
+                                        if (selectedDate) {
+                                            setFechaInicio(selectedDate);
+                                        }
+                                    }}
+                                />
+                            )}
+                        </View>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Fecha Fin:</Text>
+                            <TouchableOpacity
+                                style={styles.dateButton}
+                                onPress={() => setShowFechaFinPicker(true)}
+                            >
+                                <Text style={styles.dateButtonText}>
+                                    {fechaFin.toLocaleDateString('es-ES')}
+                                </Text>
+                                <Ionicons name="calendar" size={20} color="#666" />
+                            </TouchableOpacity>
+                            {showFechaFinPicker && (
+                                <DateTimePicker
+                                    value={fechaFin}
+                                    mode="date"
+                                    display="default"
+                                    onChange={(event, selectedDate) => {
+                                        setShowFechaFinPicker(false);
+                                        if (selectedDate) {
+                                            setFechaFin(selectedDate);
+                                        }
+                                    }}
+                                />
+                            )}
+                        </View>
+                    </View>
+                </View>
+            )}
+
+            {searchType === 'cuentaCliente' && (
+                <View style={styles.formSection}>
+                    <Text style={styles.label}>ID Cuenta Cliente:</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={cuentaClienteId}
+                        onChangeText={setCuentaClienteId}
+                        placeholder="Ingrese ID de cuenta cliente"
+                        keyboardType="numeric"
+                    />
+                </View>
+            )}
+
+            {searchType === 'cuentaClienteYEstado' && (
+                <View style={styles.formSection}>
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>ID Cuenta Cliente:</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={cuentaClienteId}
+                            onChangeText={setCuentaClienteId}
+                            placeholder="Ingrese ID de cuenta cliente"
+                            keyboardType="numeric"
+                        />
+                    </View>
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.label}>Estado de Venta:</Text>
+                        <View style={styles.pickerContainer}>
+                            <Picker
+                                selectedValue={estadoVenta}
+                                onValueChange={setEstadoVenta}
+                                style={styles.picker}
+                            >
+                                <Picker.Item label="Seleccione un estado" value="" />
+                                <Picker.Item label="Pendiente" value={EstadoVenta.PENDIENTE} />
+                                <Picker.Item label="Pagada" value={EstadoVenta.PAGADA} />
+                                <Picker.Item label="Parcial" value={EstadoVenta.PARCIAL} />
+                                <Picker.Item label="Cancelada" value={EstadoVenta.CANCELADA} />
+                            </Picker>
                         </View>
                     </View>
                 </View>
@@ -614,5 +806,20 @@ const styles = StyleSheet.create({
         color: '#999',
         marginTop: 12,
         textAlign: 'center',
+    },
+    dateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        backgroundColor: '#fff',
+    },
+    dateButtonText: {
+        fontSize: 16,
+        color: '#333',
     },
 });
