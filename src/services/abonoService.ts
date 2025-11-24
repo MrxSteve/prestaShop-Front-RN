@@ -236,6 +236,82 @@ class AbonoService {
             throw error;
         }
     }
+
+    async verMisAbonos(page: number = 0, size: number = 10): Promise<PaginatedAbonoResponse> {
+        try {
+            const response = await apiService.getAxiosInstance().get(
+                `/abonos/mis-abonos?page=${page}&size=${size}&sort=id`
+            );
+            return response.data;
+        } catch (error: any) {
+            console.error("❌ Error obteniendo mis abonos:", error);
+            throw error;
+        }
+    }
+
+    // abonoService.ts
+    async verDetalleAbono(id: number): Promise<AbonoResponse> {
+        try {
+            const res = await apiService
+                .getAxiosInstance()
+                .get(`/abonos/mi-abono/${id}`);
+            return res.data;
+        } catch (e) {
+            console.error("❌ Error obteniendo detalle del abono:", e);
+            throw e;
+        }
+    }
+
+    async verMisAbonosPendientes(page: number = 0, size: number = 10) {
+    try {
+        const response = await apiService
+            .getAxiosInstance()
+            .get(`/abonos/mis-abonos/pendientes?page=${page}&size=${size}&sort=id`);
+        return response.data;
+    } catch (error) {
+        console.error("❌ Error al obtener abonos pendientes:", error);
+        throw error;
+    }
+}
+
+async verMisAbonosPorFecha(fechaInicio: string, fechaFin: string, page = 0, size = 20) {
+    try {
+        const response = await apiService
+            .getAxiosInstance()
+            .get(`/abonos/mis-abonos/fecha`, {
+                params: {
+                    fechaInicio,
+                    fechaFin,
+                    page,
+                    size
+                }
+            });
+
+        return response.data;
+    } catch (error) {
+        console.error("❌ Error al obtener abonos por fecha:", error);
+        throw error;
+    }
+}
+
+
+async verMisAbonosPorEstado(
+        estado: string,
+        page: number = 0,
+        size: number = 20
+    ) {
+        const res = await apiService
+            .getAxiosInstance()
+            .get(`/abonos/mis-abonos/estado/${estado}`, {
+                params: { page, size },
+            });
+
+        return res.data;
+    }
+
+
+
+
 }
 
 export const abonoService = new AbonoService();

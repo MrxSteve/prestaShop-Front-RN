@@ -71,6 +71,7 @@ const MisAbonosWithHeader = () => (
     </View>
 );
 
+
 const PerfilWithHeader = () => (
     <View style={styles.screenContainer}>
         <CustomHeader title="Mi Perfil" />
@@ -130,11 +131,12 @@ export default function ClienteTabNavigator() {
                 component={MisAbonosWithHeader}
                 options={{
                     title: "Mis Abonos",
-                    tabBarIcon: ({ color }) => (
-                        <Ionicons name="card-outline" size={26} color={color} />
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="card-outline" size={size} color={color} />
                     ),
                 }}
             />
+
 
             <Tab.Screen
                 name="Perfil"
