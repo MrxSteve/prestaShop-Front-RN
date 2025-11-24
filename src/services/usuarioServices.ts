@@ -1,6 +1,7 @@
 // src/services/usuarioService.ts
 import { apiService } from './api';
 import { Page } from '../types/catalog';
+import { RolResponse } from '../types/roles';
 import {
   ActivarUsuarioRequest,
   AsignarRolAUsuarioRequest,
@@ -131,6 +132,12 @@ async desactivar(id: number): Promise<UsuarioResponse> {
   async removerRol(usuarioId: number, rolId: number): Promise<UsuarioResponse> {
     const res = await apiService.getAxiosInstance().delete<UsuarioResponse>(
       `${this.basePath}/${usuarioId}/roles/${rolId}`
+    );
+    return res.data;
+  }
+   async obtenerRolesUsuario(usuarioId: number): Promise<RolResponse[]> {
+    const res = await apiService.getAxiosInstance().get<RolResponse[]>(
+      `${this.basePath}/${usuarioId}/roles`
     );
     return res.data;
   }

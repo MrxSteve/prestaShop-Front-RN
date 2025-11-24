@@ -41,7 +41,7 @@ export interface UsuarioResponse {
   dui: string;
   fechaNacimiento: string;
   estado: UsuarioEstado;
-  roles: RolResumen[];
+  roles?: { id: number; nombre: string }[]; 
 }
 
 // --- Requests auxiliares para endpoints específicos ---

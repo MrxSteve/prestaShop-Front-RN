@@ -16,10 +16,21 @@ export type CatalogStackParamList = {
     EditarProducto: { producto: import('./catalog').ProductoResponse };
 };
 
+export type VentasStackParamList = {
+    VentasMain: undefined;
+    VentaDetalle: { ventaId: number };
+};
+
+export type AbonosStackParamList = {
+    AbonosMain: undefined;
+    AbonoDetalle: { abonoId: number };
+};
+
 export type AdminTabParamList = {
     Dashboard: undefined;
     UsuariosYCuentas: undefined;
-    Ventas: undefined;
+    Ventas: NavigatorScreenParams<VentasStackParamList>;
+    Abonos: NavigatorScreenParams<AbonosStackParamList>;
     Catalogo: NavigatorScreenParams<CatalogStackParamList>;
     Reportes: undefined;
 };
@@ -50,6 +61,12 @@ export type RootStackParamList = {
     ClienteDrawer: NavigatorScreenParams<ClienteDrawerParamList>;
 };
 
+export type ClienteStackParamList = {
+  ClienteTabs: undefined;
+  ProductoDetalleCliente: { id: number };
+};
+
+
 // Screen Props Types
 export type AuthStackScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<
     AuthStackParamList,
@@ -58,6 +75,16 @@ export type AuthStackScreenProps<T extends keyof AuthStackParamList> = NativeSta
 
 export type CatalogStackScreenProps<T extends keyof CatalogStackParamList> = NativeStackScreenProps<
     CatalogStackParamList,
+    T
+>;
+
+export type VentasStackScreenProps<T extends keyof VentasStackParamList> = NativeStackScreenProps<
+    VentasStackParamList,
+    T
+>;
+
+export type AbonosStackScreenProps<T extends keyof AbonosStackParamList> = NativeStackScreenProps<
+    AbonosStackParamList,
     T
 >;
 

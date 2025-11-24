@@ -5,11 +5,12 @@ import { StyleSheet, View } from 'react-native';
 import CustomHeader from '../components/CustomHeader';
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AdminReportesScreen from '../screens/admin/AdminReportesScreen';
-import AdminUsuariosYCuentasScreen from '../screens/admin/AdminUsuariosYCuentasScreen';
-import AdminVentasScreen from '../screens/admin/AdminVentasScreen';
 import { AdminTabParamList } from '../types/navigation';
 import CatalogStackNavigator from './CatalogStackNavigator';
+
+import AbonosStackNavigator from './AbonosStackNavigator';
 import UsersStackNavigator from './UsersStackNavigator';
+import VentasStackNavigator from './VentasStackNavigator';
 
 
 const Tab = createBottomTabNavigator<AdminTabParamList>();
@@ -30,10 +31,11 @@ const UsuariosYCuentasWithHeader = () => (
 );
 
 const VentasWithHeader = () => (
-  <View style={styles.container}>
-    <CustomHeader title="Gestión de Ventas" />
-    <AdminVentasScreen />
-  </View>
+  <VentasStackNavigator />
+);
+
+const AbonosWithHeader = () => (
+  <AbonosStackNavigator />
 );
 
 const CatalogoWithHeader = () => (
@@ -97,6 +99,17 @@ export default function AdminTabNavigator() {
           title: 'Ventas',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="receipt" size={size} color={color} />
+          ),
+        }}
+      />
+      
+      <Tab.Screen
+        name="Abonos"
+        component={AbonosWithHeader}
+        options={{
+          title: 'Abonos',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="card" size={size} color={color} />
           ),
         }}
       />
