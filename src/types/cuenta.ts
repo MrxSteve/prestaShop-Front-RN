@@ -67,9 +67,10 @@ export interface ListCuentasResponse {
 
 
 // Respuesta de operaciones simples (activar, cerrar, suspender, eliminar)
-export interface OperacionCuentaResponse {
-  mensaje: string;
-  cuenta?: CuentaResponse;
+export interface CuentaResponse extends CuentaBase {
+  id: number;
+  nombreCliente?: string;
+  saldoDisponible: number; 
 }
 
 

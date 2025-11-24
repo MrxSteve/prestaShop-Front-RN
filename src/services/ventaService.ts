@@ -259,7 +259,7 @@ class VentaService {
             if (filtros.tipoVenta && !filtros.estado && !filtros.fechaInicio) {
                 return this.buscarPorTipo(filtros.tipoVenta, page, size);
             }
-            
+
             if (filtros.estado && !filtros.tipoVenta && !filtros.fechaInicio) {
                 return this.buscarPorEstado(filtros.estado, page, size);
             }
@@ -304,7 +304,7 @@ class VentaService {
 
             const ventasCredito = ventas.filter(v => v.tipoVenta === TipoVenta.CREDITO).length;
             const ventasContado = ventas.filter(v => v.tipoVenta === TipoVenta.CONTADO).length;
-            
+
             const ventasPendientes = ventas.filter(v => v.estado === EstadoVenta.PENDIENTE).length;
             const ventasPagadas = ventas.filter(v => v.estado === EstadoVenta.PAGADA).length;
             const ventasParciales = ventas.filter(v => v.estado === EstadoVenta.PARCIAL).length;
@@ -342,12 +342,110 @@ class VentaService {
             };
         } catch (error: any) {
             const msg = error?.response?.data?.message || error?.message || 'No se pudo conectar al servidor';
-            return { 
-                success: false, 
-                message: `❌ Error: ${msg} (Status: ${error?.response?.status || 'Network'})` 
+            return {
+                success: false,
+                message: `❌ Error: ${msg} (Status: ${error?.response?.status || 'Network'})`
             };
         }
     }
+
+    async verMisCompras(page: number = 0, size: number = 16): Promise<VentaResponse[]> {
+        try {
+            const response = await apiService.getAxiosInstance().get(
+                `${this.basePath}/mis-compras`,
+                {
+                    params: {
+                        page,
+                        size,
+                        sort: "id"
+                    }
+                }
+            );
+
+
+
+            return response.data.content ?? [];
+        } catch (error: any) {
+            console.log("❌ ERROR MIS COMPRAS:", error);
+            throw error;
+        }
+    }
+
+    async verMisComprasPendientes(page: number = 0, size: number = 16) {
+        try {
+            const response = await apiService.getAxiosInstance().get(
+                `/ventas/mis-compras/pendientes?page=${page}&size=${size}&sort=id`
+            );
+            return response.data;
+        } catch (error: any) {
+            console.error("Error fetching compras pendientes:", error);
+            throw error;
+        }
+    }
+
+
+    async verMisComprasPorFecha(fechaInicio: string, fechaFin: string, page = 0, size = 16) {
+        try {
+            const response = await apiService.getAxiosInstance().get(
+                `/ventas/mis-compras/fecha`,
+                {
+                    params: {
+                        fechaInicio,
+                        fechaFin,
+                        page,
+                        size,
+                        sort: "id"
+                    }
+                }
+            );
+
+
+
+            return response.data.content ?? [];
+        } catch (error: any) {
+            console.error("Error fetching compras por fecha:", error);
+            throw error;
+        }
+    }
+
+
+    async verMisComprasPorEstado(estado: string, page = 0, size = 16) {
+        try {
+            const response = await apiService.getAxiosInstance().get(
+                `/ventas/mis-compras/estado/${estado}`,
+                {
+                    params: {
+                        page,
+                        size,
+                        sort: "id"
+                    }
+                }
+            );
+
+
+            return response.data.content ?? [];
+        } catch (error: any) {
+            console.error("❌ Error buscando compras por estado:", error);
+            throw error;
+        }
+    }
+async verDetalleCompra(id: number): Promise<VentaResponse> {
+        try {
+     
+            const response = await apiService
+                .getAxiosInstance()
+                .get<VentaResponse>(`${this.basePath}/mi-compra/${id}`);
+
+            return response.data;
+        } catch (error: any) {
+            console.error('❌ Error al obtener detalle de compra:', error?.response?.data ?? error.message ?? error);
+            throw error;
+        }
+    }
+
+
+
+
 }
 
 export const ventaService = new VentaService();
