@@ -21,10 +21,16 @@ export type VentasStackParamList = {
     VentaDetalle: { ventaId: number };
 };
 
+export type AbonosStackParamList = {
+    AbonosMain: undefined;
+    AbonoDetalle: { abonoId: number };
+};
+
 export type AdminTabParamList = {
     Dashboard: undefined;
     UsuariosYCuentas: undefined;
     Ventas: NavigatorScreenParams<VentasStackParamList>;
+    Abonos: NavigatorScreenParams<AbonosStackParamList>;
     Catalogo: NavigatorScreenParams<CatalogStackParamList>;
     Reportes: undefined;
 };
@@ -74,6 +80,11 @@ export type CatalogStackScreenProps<T extends keyof CatalogStackParamList> = Nat
 
 export type VentasStackScreenProps<T extends keyof VentasStackParamList> = NativeStackScreenProps<
     VentasStackParamList,
+    T
+>;
+
+export type AbonosStackScreenProps<T extends keyof AbonosStackParamList> = NativeStackScreenProps<
+    AbonosStackParamList,
     T
 >;
 

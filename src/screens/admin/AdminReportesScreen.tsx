@@ -10,6 +10,7 @@ import {
     Text,
     View
 } from 'react-native';
+import { AbonoReportsSection } from '../../components/reports/AbonoReportsSection';
 import { MainNavigationTabs } from '../../components/reports/MainNavigationTabs';
 import { PlaceholderSection } from '../../components/reports/PlaceholderSection';
 import { ProductsReportsSection } from '../../components/reports/ProductsReportsSection';
@@ -116,10 +117,8 @@ const AdminReportesScreen: React.FC = () => {
 
             {/* Secciones placeholders para futuras implementaciones */}
             {mainSection === 'abonos' && (
-                <PlaceholderSection
-                    icon="wallet-outline"
-                    title="Reportes de Abonos"
-                    description="Próximamente: Seguimiento de abonos, estados de pago y análisis financiero."
+                <AbonoReportsSection
+                    refreshTrigger={refreshTrigger}
                 />
             )}
 
