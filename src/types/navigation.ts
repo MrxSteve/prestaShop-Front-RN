@@ -39,8 +39,7 @@ export type ClienteTabParamList = {
     Home: undefined;
     Catalogo: undefined;
     MisCompras: undefined;
-    MisAbonos: undefined;
-    Perfil: undefined;
+    MisAbonos: undefined
 };
 
 export type AdminDrawerParamList = {
@@ -53,6 +52,7 @@ export type ClienteDrawerParamList = {
     ClienteTabs: NavigatorScreenParams<ClienteTabParamList>;
     MiCuenta: undefined;
     Configuracion: undefined;
+    Perfil: undefined;
 };
 
 export type RootStackParamList = {

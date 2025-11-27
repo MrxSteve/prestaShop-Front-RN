@@ -207,11 +207,7 @@ export default function ClienteCatalogoScreen() {
   return (
     <View style={{ flex: 1 }}>
       {/* Buscador */}
-      <BuscadorProducto
-        value={nombreBuscar}
-        onChange={setNombreBuscar}
-        onSubmit={() => buscarProductos(0)}
-      />
+     
 
       {/* Selector de Categoría */}
       <CategoriaSelector
@@ -242,7 +238,7 @@ export default function ClienteCatalogoScreen() {
             data={productos}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => <ProductoCard producto={item} />}
-            numColumns={2}
+            numColumns={1}
             contentContainerStyle={styles.lista}
           />
 

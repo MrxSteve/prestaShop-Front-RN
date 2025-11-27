@@ -1,304 +1,257 @@
-import React from 'react';
+import React from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { useAuth } from '../../context/AuthContext';
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ClientePerfilScreen() {
-    const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const navigation = useNavigation();
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-        } catch (error) {
-            console.error('Error during logout:', error);
-        }
-    };
+  // Formateo de fecha
+  const formatDate = (date: string | undefined) => {
+    if (!date) return "No registrada";
+    return new Date(date).toLocaleDateString("es-ES");
+  };
 
-    return (
-        <ScrollView style={styles.container}>
-            <View style={styles.header}>
-                <View style={styles.avatarContainer}>
-                    <Text style={styles.avatarText}>
-                        {user?.nombreCompleto?.charAt(0).toUpperCase()}
-                    </Text>
+  return (
+    <ScrollView style={styles.container}>
+      {/* ==== BOTÓN DE REGRESO ==== */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.navigate("ClienteTabs" as never)}
+      >
+        <Ionicons name="arrow-back" size={26} color="#1A1C1E" />
+      </TouchableOpacity>
+
+      {/* ===== HEADER REDISEÑADO ===== */}
+      <View style={styles.header}>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>
+            {user?.nombreCompleto?.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+
+        <Text style={styles.nameText}>{user?.nombreCompleto}</Text>
+        <Text style={styles.emailText}>{user?.email}</Text>
+      </View>
+
+      {/* ===== INFORMACIÓN PERSONAL ===== */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Información Personal</Text>
+
+        <View style={styles.card}>
+          <InfoRow label="Nombre Completo" value={user?.nombreCompleto} />
+          <InfoRow label="Email" value={user?.email} />
+          <InfoRow label="Teléfono" value={user?.telefono || "No registrado"} />
+          <InfoRow label="DUI" value={user?.dui || "No registrado"} />
+          <InfoRow
+            label="Dirección"
+            value={user?.direccion || "No registrada"}
+          />
+          <InfoRow
+            label="Fecha de Nacimiento"
+            value={formatDate(user?.fechaNacimiento)}
+          />
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Estado:</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor:
+                    user?.estado === "ACTIVO" ? "#4CAF50" : "#F44336",
+                },
+              ]}
+            >
+              <Text style={styles.statusText}>{user?.estado}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* ===== INFORMACIÓN DE CUENTA ===== */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Información de Cuenta</Text>
+
+        <View style={styles.card}>
+          <InfoRow
+            label="ID de Cuenta"
+            value={user?.cuentaClienteId || "No asignada"}
+          />
+
+          {/* ROLES */}
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Roles:</Text>
+            <View style={styles.rolesContainer}>
+              {user?.roles?.map((rol) => (
+                <View key={rol.id} style={styles.roleBadge}>
+                  <Text style={styles.roleText}>{rol.nombre}</Text>
                 </View>
-                <Text style={styles.nameText}>{user?.nombreCompleto}</Text>
-                <Text style={styles.emailText}>{user?.email}</Text>
+              ))}
             </View>
+          </View>
 
-            <View style={styles.infoSection}>
-                <Text style={styles.sectionTitle}>Información Personal</Text>
+          <InfoRow
+            label="Miembro desde"
+            value={formatDate(user?.createdAt)}
+          />
+        </View>
+      </View>
 
-                <View style={styles.infoCard}>
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Nombre Completo:</Text>
-                        <Text style={styles.infoValue}>{user?.nombreCompleto}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Email:</Text>
-                        <Text style={styles.infoValue}>{user?.email}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Teléfono:</Text>
-                        <Text style={styles.infoValue}>{user?.telefono || 'No registrado'}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>DUI:</Text>
-                        <Text style={styles.infoValue}>{user?.dui || 'No registrado'}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Dirección:</Text>
-                        <Text style={styles.infoValue}>{user?.direccion || 'No registrada'}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Fecha de Nacimiento:</Text>
-                        <Text style={styles.infoValue}>
-                            {user?.fechaNacimiento || 'No registrada'}
-                        </Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Estado:</Text>
-                        <View style={[
-                            styles.statusBadge,
-                            { backgroundColor: user?.estado === 'ACTIVO' ? '#4CAF50' : '#F44336' }
-                        ]}>
-                            <Text style={styles.statusText}>{user?.estado}</Text>
-                        </View>
-                    </View>
-                </View>
-            </View>
-
-            <View style={styles.accountSection}>
-                <Text style={styles.sectionTitle}>Información de Cuenta</Text>
-
-                <View style={styles.infoCard}>
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>ID de Cuenta:</Text>
-                        <Text style={styles.infoValue}>
-                            {user?.cuentaClienteId || 'No asignada'}
-                        </Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Roles:</Text>
-                        <View style={styles.rolesContainer}>
-                            {user?.roles?.map((rol) => (
-                                <View key={rol.id} style={styles.roleBadge}>
-                                    <Text style={styles.roleText}>{rol.nombre}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Miembro desde:</Text>
-                        <Text style={styles.infoValue}>
-                            {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
-                        </Text>
-                    </View>
-                </View>
-            </View>
-
-            <View style={styles.actionsSection}>
-                <Text style={styles.sectionTitle}>Acciones de Cuenta</Text>
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <Text style={styles.actionIcon}>🔒</Text>
-                    <Text style={styles.actionText}>Cambiar Contraseña</Text>
-                    <Text style={styles.actionArrow}>›</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <Text style={styles.actionIcon}>📄</Text>
-                    <Text style={styles.actionText}>Términos y Condiciones</Text>
-                    <Text style={styles.actionArrow}>›</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <Text style={styles.actionIcon}>🔐</Text>
-                    <Text style={styles.actionText}>Política de Privacidad</Text>
-                    <Text style={styles.actionArrow}>›</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <Text style={styles.actionIcon}>ℹ️</Text>
-                    <Text style={styles.actionText}>Acerca de la App</Text>
-                    <Text style={styles.actionArrow}>›</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.logoutSection}>
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                    <Text style={styles.logoutText}>🚪 Cerrar Sesión</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
-    );
+      <View style={{ height: 50 }} />
+    </ScrollView>
+  );
 }
 
+/* ==== COMPONENTE REUTILIZABLE ==== */
+const InfoRow = ({ label, value }: any) => (
+  <View style={styles.infoRow}>
+    <Text style={styles.infoLabel}>{label}:</Text>
+    <Text style={styles.infoValue}>{value}</Text>
+  </View>
+);
+
+const PRIMARY = "#4C8BFF";
+
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
-    },
-    header: {
-        backgroundColor: '#2196F3',
-        padding: 30,
-        alignItems: 'center',
-    },
-    avatarContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 15,
-    },
-    avatarText: {
-        fontSize: 36,
-        fontWeight: 'bold',
-        color: '#2196F3',
-    },
-    nameText: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
-        marginBottom: 5,
-    },
-    emailText: {
-        fontSize: 16,
-        color: '#E3F2FD',
-    },
-    infoSection: {
-        padding: 20,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 15,
-    },
-    infoCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-    },
-    infoLabel: {
-        fontSize: 16,
-        color: '#666',
-        flex: 1,
-        fontWeight: '500',
-    },
-    infoValue: {
-        fontSize: 16,
-        color: '#333',
-        flex: 1,
-        textAlign: 'right',
-    },
-    statusBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 15,
-    },
-    statusText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    accountSection: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-    },
-    rolesContainer: {
-        flexDirection: 'row',
-        flex: 1,
-        justifyContent: 'flex-end',
-    },
-    roleBadge: {
-        backgroundColor: '#2196F3',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 15,
-        marginLeft: 5,
-    },
-    roleText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    actionsSection: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-    },
-    actionButton: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    actionIcon: {
-        fontSize: 24,
-        marginRight: 15,
-    },
-    actionText: {
-        fontSize: 16,
-        color: '#333',
-        flex: 1,
-    },
-    actionArrow: {
-        fontSize: 20,
-        color: '#ccc',
-    },
-    logoutSection: {
-        padding: 20,
-        paddingBottom: 40,
-    },
-    logoutButton: {
-        backgroundColor: '#F44336',
-        borderRadius: 12,
-        padding: 20,
-        alignItems: 'center',
-    },
-    logoutText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F7FF",
+  },
+
+  /* === BOTÓN DE REGRESO === */
+  backButton: {
+    position: "absolute",
+    top: 45,
+    left: 20,
+    zIndex: 20,
+    backgroundColor: "#FFFFFF",
+    padding: 10,
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: "#000",
+  },
+
+  /* === HEADER === */
+  header: {
+    paddingTop: 90,
+    paddingBottom: 30,
+    backgroundColor: PRIMARY,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    alignItems: "center",
+  },
+
+  avatarContainer: {
+    width: 95,
+    height: 95,
+    borderRadius: 48,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+    elevation: 5,
+  },
+
+  avatarText: {
+    fontSize: 42,
+    fontWeight: "bold",
+    color: PRIMARY,
+  },
+
+  nameText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+
+  emailText: {
+    fontSize: 15,
+    color: "#E8EDFF",
+    marginTop: 4,
+  },
+
+  /* === SECCIONES === */
+  section: {
+    paddingHorizontal: 20,
+    marginTop: 25,
+  },
+
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: "700",
+    color: "#1A1C1E",
+    marginBottom: 10,
+  },
+
+  /* === TARJETAS === */
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    borderRadius: 15,
+    elevation: 3,
+    shadowColor: "#000",
+  },
+
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EFEFF5",
+  },
+
+  infoLabel: {
+    flex: 1,
+    fontSize: 15,
+    color: "#555",
+    fontWeight: "600",
+  },
+
+  infoValue: {
+    flex: 1,
+    fontSize: 15,
+    color: "#222",
+    textAlign: "right",
+  },
+
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+
+  statusText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  rolesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    gap: 6,
+  },
+
+  roleBadge: {
+    backgroundColor: PRIMARY,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+
+  roleText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
 });

@@ -16,6 +16,16 @@ interface PaginationProps {
     mode?: 'compact' | 'full';
 }
 
+const COLORS = {
+    primary: '#007AFF',
+    background: '#FFFFFF',
+    border: '#E0E0E0',
+    text: '#333333',
+    secondaryText: '#757575',
+    disabled: '#CCCCCC',
+    lightGray: '#F7F7F7',
+};
+
 export const Pagination: React.FC<PaginationProps> = ({
     paginationInfo,
     onPageChange,
@@ -25,7 +35,7 @@ export const Pagination: React.FC<PaginationProps> = ({
     const { currentPage, totalPages, totalElements, pageSize } = paginationInfo;
 
     if (totalPages <= 1) {
-        return null; // No mostrar paginación si solo hay una página
+        return null;
     }
 
     const handlePrevious = () => {
@@ -54,7 +64,6 @@ export const Pagination: React.FC<PaginationProps> = ({
         let startPage = Math.max(0, currentPage - halfVisible);
         let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
         
-        // Ajustar el inicio si no tenemos suficientes páginas al final
         if (endPage - startPage + 1 < maxVisiblePages) {
             startPage = Math.max(0, endPage - maxVisiblePages + 1);
         }
@@ -70,98 +79,132 @@ export const Pagination: React.FC<PaginationProps> = ({
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
 
     if (mode === 'compact') {
+        const isPrevDisabled = currentPage === 0 || loading;
+        const isNextDisabled = currentPage === totalPages - 1 || loading;
+
         return (
             <View style={styles.compactContainer}>
                 <TouchableOpacity
-                    style={[styles.compactButton, currentPage === 0 && styles.disabledButton]}
+                    style={[
+                        styles.compactButton, 
+                        isPrevDisabled && styles.disabledButton,
+                    ]}
                     onPress={handlePrevious}
-                    disabled={currentPage === 0 || loading}
+                    disabled={isPrevDisabled}
                 >
-                    <Ionicons name="chevron-back" size={20} color={currentPage === 0 ? '#ccc' : '#666'} />
+                    <Ionicons 
+                        name="chevron-back" 
+                        size={24} 
+                        color={isPrevDisabled ? COLORS.disabled : COLORS.primary} 
+                    />
                 </TouchableOpacity>
                 
                 <Text style={styles.compactText}>
-                    {currentPage + 1} de {totalPages}
+                    <Text style={styles.compactCurrentPageText}>{currentPage + 1}</Text> de {totalPages}
                 </Text>
                 
                 <TouchableOpacity
-                    style={[styles.compactButton, currentPage === totalPages - 1 && styles.disabledButton]}
+                    style={[
+                        styles.compactButton, 
+                        isNextDisabled && styles.disabledButton,
+                    ]}
                     onPress={handleNext}
-                    disabled={currentPage === totalPages - 1 || loading}
+                    disabled={isNextDisabled}
                 >
-                    <Ionicons name="chevron-forward" size={20} color={currentPage === totalPages - 1 ? '#ccc' : '#666'} />
+                    <Ionicons 
+                        name="chevron-forward" 
+                        size={24} 
+                        color={isNextDisabled ? COLORS.disabled : COLORS.primary} 
+                    />
                 </TouchableOpacity>
             </View>
         );
     }
 
+    const isPrevDisabled = currentPage === 0 || loading;
+    const isNextDisabled = currentPage === totalPages - 1 || loading;
+    
     return (
         <View style={styles.container}>
-            {/* Información de elementos */}
             <View style={styles.infoContainer}>
                 <Text style={styles.infoText}>
                     Mostrando {startItem}-{endItem} de {totalElements} elementos
                 </Text>
             </View>
             
-            {/* Controles de paginación */}
             <View style={styles.controlsContainer}>
-                {/* Botón anterior */}
                 <TouchableOpacity
-                    style={[styles.button, styles.navigationButton, currentPage === 0 && styles.disabledButton]}
+                    style={[
+                        styles.button, 
+                        styles.navigationButton, 
+                        isPrevDisabled && styles.disabledButton,
+                        { marginRight: 8 }
+                    ]}
                     onPress={handlePrevious}
-                    disabled={currentPage === 0 || loading}
+                    disabled={isPrevDisabled}
                 >
-                    <Ionicons name="chevron-back" size={16} color={currentPage === 0 ? '#ccc' : '#666'} />
-                    <Text style={[styles.buttonText, currentPage === 0 && styles.disabledText]}>
+                    <Ionicons 
+                        name="chevron-back" 
+                        size={18} 
+                        color={isPrevDisabled ? COLORS.disabled : COLORS.secondaryText} 
+                        style={{ marginRight: 4 }}
+                    />
+                    <Text style={[
+                        styles.buttonText, 
+                        isPrevDisabled && styles.disabledText
+                    ]}>
                         Anterior
                     </Text>
                 </TouchableOpacity>
 
-                {/* Números de página */}
                 <View style={styles.pageNumbersContainer}>
-                    {getPageNumbers().map((pageNumber) => (
-                        <TouchableOpacity
-                            key={pageNumber}
-                            style={[
-                                styles.button,
-                                styles.pageButton,
-                                pageNumber === currentPage && styles.activeButton
-                            ]}
-                            onPress={() => handlePageNumber(pageNumber)}
-                            disabled={loading}
-                        >
-                            <Text style={[
-                                styles.buttonText,
-                                styles.pageButtonText,
-                                pageNumber === currentPage && styles.activeButtonText
-                            ]}>
-                                {pageNumber + 1}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+                    {getPageNumbers().map((pageNumber) => {
+                        const isActive = pageNumber === currentPage;
+                        return (
+                            <TouchableOpacity
+                                key={pageNumber}
+                                style={[
+                                    styles.button,
+                                    styles.pageButton,
+                                    isActive && styles.activeButton,
+                                    (loading && !isActive) && styles.disabledButton
+                                ]}
+                                onPress={() => handlePageNumber(pageNumber)}
+                                disabled={loading}
+                            >
+                                <Text style={[
+                                    styles.buttonText,
+                                    styles.pageButtonText,
+                                    isActive ? styles.activeButtonText : styles.pageNumberText,
+                                ]}>
+                                    {pageNumber + 1}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
 
-                {/* Botón siguiente */}
                 <TouchableOpacity
                     style={[
                         styles.button,
                         styles.navigationButton,
-                        currentPage === totalPages - 1 && styles.disabledButton
+                        isNextDisabled && styles.disabledButton,
+                        { marginLeft: 8 }
                     ]}
                     onPress={handleNext}
-                    disabled={currentPage === totalPages - 1 || loading}
+                    disabled={isNextDisabled}
                 >
                     <Text style={[
                         styles.buttonText,
-                        currentPage === totalPages - 1 && styles.disabledText
+                        isNextDisabled && styles.disabledText
                     ]}>
                         Siguiente
                     </Text>
                     <Ionicons 
                         name="chevron-forward" 
-                        size={16} 
-                        color={currentPage === totalPages - 1 ? '#ccc' : '#666'} 
+                        size={18} 
+                        color={isNextDisabled ? COLORS.disabled : COLORS.secondaryText}
+                        style={{ marginLeft: 4 }}
                     />
                 </TouchableOpacity>
             </View>
@@ -169,21 +212,28 @@ export const Pagination: React.FC<PaginationProps> = ({
     );
 };
 
+
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
+        borderTopColor: COLORS.border,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 1,
+        elevation: 1,
     },
     infoContainer: {
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     infoText: {
         fontSize: 14,
-        color: '#666',
+        color: COLORS.secondaryText,
+        fontWeight: '400',
     },
     controlsContainer: {
         flexDirection: 'row',
@@ -193,69 +243,75 @@ const styles = StyleSheet.create({
     pageNumbersContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
         justifyContent: 'center',
+        marginHorizontal: 8,
     },
     button: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 6,
-        minWidth: 40,
+        height: 40,
+        borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
+        minWidth: 40,
+        backgroundColor: COLORS.lightGray,
     },
     navigationButton: {
         flexDirection: 'row',
-        backgroundColor: '#f5f5f5',
         paddingHorizontal: 16,
-        minWidth: 80,
+        minWidth: 100,
     },
     pageButton: {
         marginHorizontal: 4,
-        backgroundColor: '#f5f5f5',
-        minWidth: 40,
+        width: 40,
+        backgroundColor: COLORS.lightGray,
     },
     activeButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: COLORS.primary,
     },
     disabledButton: {
-        backgroundColor: '#f9f9f9',
-        opacity: 0.6,
+        backgroundColor: COLORS.lightGray,
+        opacity: 0.5,
     },
     buttonText: {
         fontSize: 14,
-        color: '#666',
+        color: COLORS.secondaryText,
         fontWeight: '500',
     },
     pageButtonText: {
         textAlign: 'center',
     },
-    activeButtonText: {
-        color: '#fff',
+    pageNumberText: {
+        color: COLORS.text,
         fontWeight: '600',
     },
-    disabledText: {
-        color: '#ccc',
+    activeButtonText: {
+        color: COLORS.background,
+        fontWeight: '700',
     },
-    // Estilos para modo compacto
+    disabledText: {
+        color: COLORS.disabled,
+    },
     compactContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 8,
-        backgroundColor: '#fff',
+        paddingVertical: 10,
+        backgroundColor: COLORS.background,
         borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
+        borderTopColor: COLORS.border,
     },
     compactButton: {
         padding: 8,
         borderRadius: 4,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: COLORS.background,
     },
     compactText: {
-        fontSize: 14,
-        color: '#666',
+        fontSize: 16,
+        color: COLORS.secondaryText,
         marginHorizontal: 16,
-        fontWeight: '500',
+        fontWeight: '400',
     },
+    compactCurrentPageText: {
+        color: COLORS.text,
+        fontWeight: '600',
+    }
 });

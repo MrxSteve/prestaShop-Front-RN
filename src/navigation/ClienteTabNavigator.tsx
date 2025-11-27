@@ -138,16 +138,7 @@ export default function ClienteTabNavigator() {
             />
 
 
-            <Tab.Screen
-                name="Perfil"
-                component={PerfilWithHeader}
-                options={{
-                    title: "Perfil",
-                    tabBarIcon: ({ color }) => (
-                        <Ionicons name="person-outline" size={26} color={color} />
-                    ),
-                }}
-            />
+          
         </Tab.Navigator>
     );
 }
@@ -155,7 +146,7 @@ export default function ClienteTabNavigator() {
 const styles = StyleSheet.create({
     screenContainer: {
         flex: 1,
-        backgroundColor: "#F5F7FF",
+        backgroundColor: "#f0f0f3f0",
     },
 
     header: {
@@ -199,12 +190,10 @@ const styles = StyleSheet.create({
     },
 
     tabBar: {
-        position: "absolute",
         left: 16,
         right: 16,
 
         backgroundColor: "#FFFFFF",
-        borderRadius: 25,
         height: 70,
         paddingBottom: 10,
 
@@ -222,8 +211,8 @@ const styles = StyleSheet.create({
     },
 
     tabLabel: {
-        fontSize: 12,
-        fontWeight: "600",
+        fontSize: 10,
+        fontWeight: "400",
         marginTop: 2,
     },
 });

@@ -7,8 +7,8 @@ interface Props {
 }
 
 // Definimos los colores del tema
-const DISPONIBLE_COLOR = '#388E3C'; // Verde oscuro
-const NO_DISPONIBLE_COLOR = '#D32F2F'; // Rojo oscuro
+const DISPONIBLE_COLOR = '#36ba3df3'; // Verde oscuro
+const NO_DISPONIBLE_COLOR = '#d32f2fe4'; // Rojo oscuro
 
 export default function EstadoBadge({ estado }: Props) {
   // Asegúrate de que `EstadoProducto` esté correctamente importado y definido
@@ -27,14 +27,14 @@ const styles = StyleSheet.create({
   badge: {
     // Posicionamiento absoluto para que flote sobre la tarjeta
     position: 'absolute',
-    top: 10, // Un poco más adentro del borde
+    top: 7, // Un poco más adentro del borde
     right: 10,
     
     
     // Estilo de etiqueta
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 15, // Más redondeado (pastilla)
+    borderRadius: 5,// Más redondeado (pastilla)
     zIndex: 10,
     
     // Sombra para darle un efecto elevado

@@ -1,10 +1,9 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-// Asegúrate de que esta ruta de importación sea correcta
-import EstadoBadge from './EstadoBadge'; 
+import EstadoBadge from './EstadoBadge';
 import { ProductoResponse } from '@/src/types/producto';
 import { ClienteStackParamList } from '@/src/types/navigation';
 
@@ -12,14 +11,9 @@ interface Props {
   producto: ProductoResponse;
 }
 
-// Paleta de Colores del Tema Moderno
-const PRIMARY_BLUE = '#5D7BEF';
-const LIGHT_BLUE = '#DAE6FE'; // Fondo de la tarjeta
-const TEXT_DARK_BLUE = '#34495E'; // Color más oscuro para el texto principal
-const ACCENT_RED = '#E74C3C'; // Un rojo para el énfasis, si se necesita
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function ProductoCard({ producto }: Props) {
-
   const navigation = useNavigation<StackNavigationProp<ClienteStackParamList>>();
 
   return (
@@ -30,11 +24,9 @@ export default function ProductoCard({ producto }: Props) {
       }
       activeOpacity={0.9}
     >
-      
-      {/* EstadoBadge se posiciona absolutamente sobre la tarjeta */}
-      <EstadoBadge estado={producto.estado} /> 
+      <EstadoBadge estado={producto.estado} />
 
-      {/* Contenedor de la Imagen (Ahora Cuadrado) */}
+      {/* Imagen a la izquierda */}
       <View style={styles.imageWrapper}>
         <Image
           source={{
@@ -46,85 +38,90 @@ export default function ProductoCard({ producto }: Props) {
         />
       </View>
 
-      {/* Nombre del Producto */}
-      <Text style={styles.nombre} numberOfLines={1}>
-        {producto.nombre}
-      </Text>
-      
-      {/* Precio y Puntos de detalle */}
-      <View style={styles.detailsRow}>
+      {/* Contenido */}
+      <View style={styles.infoSection}>
+        <View style={styles.topRow}>
+          <Text style={styles.nombre} numberOfLines={1}>
+            {producto.nombre}
+          </Text>
           <Text style={styles.precio}>${producto.precioUnitario.toFixed(2)}</Text>
-          {/* Los puntos ahora serán del color principal, no dorados */}
-          <Text style={styles.dots}>••••</Text> 
+        </View>
+
+        <Text style={styles.description} numberOfLines={1}>
+          {producto.descripcion ?? "Producto disponible"}
+        </Text>
       </View>
-      
     </TouchableOpacity>
   );
-
 }
 
+const CARD_WIDTH = SCREEN_WIDTH * 0.92;
 const styles = StyleSheet.create({
   cardContainer: {
-    flex: 1,
-    backgroundColor: LIGHT_BLUE, // Fondo azul claro para la tarjeta
-    margin: 8,
-    borderRadius: 20, // Bordes redondeados
-    padding: 14,
-    alignItems: "center",
-    maxWidth: '45%', 
+    flexDirection: "row",
+    width: "95%",
+    alignSelf: "center",
 
-    // Sombra sutil
-    elevation: 8,
-    shadowColor: PRIMARY_BLUE,
-    shadowOpacity: 0.1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 15,
+    padding: 14,
+    marginVertical: 10,
+
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
     shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
+    shadowOffset: { width: 0, height: 4 },
   },
-  
+
   imageWrapper: {
-    // Contenedor CUADRADO de la imagen
-    width: 120,
-    height: 120,
-    borderRadius: 15, // Bordes redondeados para el cuadrado
-    backgroundColor: PRIMARY_BLUE, // Fondo azul oscuro
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    
-    // Eliminado: borderWidth y borderColor para quitar el borde amarillo
-    zIndex: 2, 
+    width: 90,
+    height: 90,
+    borderRadius: 16,
+    overflow: "hidden",
+    marginRight: 14,
   },
+
   imagen: {
-    width: '90%', // La imagen ocupa el 90% del cuadrado
-    height: '90%',
-    borderRadius: 10, // Bordes un poco menos redondeados que el contenedor
-    resizeMode: 'contain', // Ajuste de la imagen
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
+
+  infoSection: {
+    flex: 1,
+    justifyContent: "center",
+  },
+
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+
   nombre: {
+    flex: 1,
     fontSize: 16,
     fontWeight: "600",
-    color: TEXT_DARK_BLUE, // Texto más oscuro para mejor contraste
-    textAlign: "center",
-    marginBottom: 4,
-    width: '100%',
+    color: "#1C1C1E",
+    marginRight: 6,
   },
-  detailsRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%',
-      paddingHorizontal: 5,
-      marginTop: 5, // Un poco más de margen superior para separar
-  },
+
   precio: {
     fontSize: 18,
-    fontWeight: "800",
-    color: PRIMARY_BLUE, // Precio en el color principal
+    fontWeight: "700",
+    color: "#007AFF",
   },
-  dots: {
-      fontSize: 18,
-      color: PRIMARY_BLUE, // Puntos en el color principal
-      fontWeight: 'bold',
-      marginTop: -10, 
-  }
+
+  subtitle: {
+    fontSize: 13,
+    color: "#6C757D",
+    marginBottom: 2,
+  },
+
+  description: {
+    fontSize: 13,
+    color: "#6C757D",
+  },
 });
