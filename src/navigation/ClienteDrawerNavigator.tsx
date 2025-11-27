@@ -1,4 +1,5 @@
 import ClienteMiCuentaScreen from '@/src/screens/cliente/ClienteMiCuentaScreen';
+import ClientePerfilScreen from '@/src/screens/cliente/ClientePerfilScreen'; // 👈 IMPORTANTE
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import React from 'react';
@@ -9,6 +10,7 @@ import { ClienteDrawerParamList } from '../types/navigation';
 import ClienteStackNavigator from './ClienteStackNavigator';
 
 const Drawer = createDrawerNavigator<ClienteDrawerParamList>();
+
 
 const COLOR = {
     primary: "#4C8BFF",
@@ -25,9 +27,9 @@ const COLOR = {
 
     error: "#FF4D4F",
     errorContainer: "#FFE8E8",
-    onErrorContainer: "#8C0000",
 };
 
+// ===== PANTALLA DE CONFIGURACIÓN =====
 const ConfiguracionScreen = () => (
     <View style={STYLES.container}>
         <CustomHeader title="Configuración" />
@@ -38,6 +40,7 @@ const ConfiguracionScreen = () => (
     </View>
 );
 
+// ===== CONTENIDO PERSONALIZADO DEL DRAWER =====
 function CustomDrawerContent(props: any) {
     const { user, logout } = useAuth();
 
@@ -54,9 +57,16 @@ function CustomDrawerContent(props: any) {
     };
 
     return (
-        <DrawerContentScrollView {...props} contentContainerStyle={STYLES.drawerScroll}>
-            
-            <View style={STYLES.drawerHeader}>
+        <DrawerContentScrollView
+            {...props}
+            contentContainerStyle={STYLES.drawerScroll}
+        >
+            {/* ==== HEADER DEL DRAWER (TOCA PARA IR AL PERFIL) ==== */}
+            <TouchableOpacity
+                style={STYLES.drawerHeader}
+                onPress={() => props.navigation.navigate("Perfil")}
+                activeOpacity={0.9}
+            >
                 <View style={STYLES.avatar}>
                     <Text style={STYLES.avatarText}>
                         {user?.nombreCompleto?.charAt(0).toUpperCase()}
@@ -64,45 +74,53 @@ function CustomDrawerContent(props: any) {
                 </View>
 
                 <Text style={STYLES.userName}>{user?.nombreCompleto}</Text>
-                <Text style={STYLES.userRole}>Cliente</Text>
+            </TouchableOpacity>
 
-                <View style={STYLES.balanceCard}>
-                    <Ionicons name="wallet" size={20} color={COLOR.primary} />
-                    <Text style={STYLES.balanceText}>Saldo: $0.00</Text>
-                </View>
-            </View>
-
+            {/* ==== ITEMS DEL DRAWER ==== */}
             <View style={STYLES.drawerItemContainer}>
                 <DrawerItemList {...props} />
             </View>
 
-            <Text style={STYLES.sectionTitle}>Acciones rápidas</Text>
+            {/* ==== SECCIÓN ACCIONES DE CUENTA ==== */}
+            <Text style={STYLES.sectionTitle}>Acciones de Cuenta</Text>
 
-            <TouchableOpacity style={STYLES.cardAction}>
-                <Ionicons name="card-outline" size={22} color={COLOR.primary} />
-                <Text style={STYLES.cardActionText}>Realizar Abono</Text>
+            <TouchableOpacity style={STYLES.cardOption} onPress={() => props.navigation.navigate("Perfil")}>
+                <Ionicons name="lock-closed-outline" size={22} color={COLOR.primary} />
+                <Text style={STYLES.cardActionText}>Cambiar Contraseña</Text>
+                <Ionicons name="chevron-forward" size={18} color={COLOR.onSurfaceVariant} style={{ marginLeft: "auto" }} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={STYLES.cardAction}>
-                <Ionicons name="receipt-outline" size={22} color={COLOR.primary} />
-                <Text style={STYLES.cardActionText}>Ver Historial</Text>
+            <TouchableOpacity style={STYLES.cardOption}>
+                <Ionicons name="document-text-outline" size={22} color={COLOR.primary} />
+                <Text style={STYLES.cardActionText}>Términos y Condiciones</Text>
+                <Ionicons name="chevron-forward" size={18} color={COLOR.onSurfaceVariant} style={{ marginLeft: "auto" }} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={STYLES.cardAction}>
-                <Ionicons name="help-circle-outline" size={22} color={COLOR.primary} />
-                <Text style={STYLES.cardActionText}>Ayuda y Soporte</Text>
+            <TouchableOpacity style={STYLES.cardOption}>
+                <Ionicons name="shield-checkmark-outline" size={22} color={COLOR.primary} />
+                <Text style={STYLES.cardActionText}>Política de Privacidad</Text>
+                <Ionicons name="chevron-forward" size={18} color={COLOR.onSurfaceVariant} style={{ marginLeft: "auto" }} />
             </TouchableOpacity>
 
+            <TouchableOpacity style={STYLES.cardOption}>
+                <Ionicons name="information-circle-outline" size={22} color={COLOR.primary} />
+                <Text style={STYLES.cardActionText}>Acerca de la App</Text>
+                <Ionicons name="chevron-forward" size={18} color={COLOR.onSurfaceVariant} style={{ marginLeft: "auto" }} />
+            </TouchableOpacity>
+
+            {/* ==== BOTÓN LOGOUT ==== */}
             <TouchableOpacity style={STYLES.logoutButton} onPress={handleLogout}>
                 <Ionicons name="log-out-outline" size={22} color={COLOR.error} />
                 <Text style={STYLES.logoutText}>Cerrar Sesión</Text>
             </TouchableOpacity>
 
+            {/* ==== VERSIÓN ==== */}
             <Text style={STYLES.version}>ShopMoney v1.0.0</Text>
         </DrawerContentScrollView>
     );
 }
 
+// ===== DRAWER PRINCIPAL =====
 export default function ClienteDrawerNavigator() {
     return (
         <Drawer.Navigator
@@ -138,6 +156,15 @@ export default function ClienteDrawerNavigator() {
                 }}
             />
 
+            {/* ===== PERFIL (OCULTO EN EL DRAWER PERO ACCESIBLE DESDE EL AVATAR) ===== */}
+            <Drawer.Screen
+                name="Perfil"
+                component={ClientePerfilScreen}
+                options={{
+                    drawerItemStyle: { height: 0 }, // 👈 OCULTAR DEL DRAWER
+                }}
+            />
+
             <Drawer.Screen
                 name="Configuracion"
                 component={ConfiguracionScreen}
@@ -151,6 +178,7 @@ export default function ClienteDrawerNavigator() {
     );
 }
 
+// ===== ESTILOS =====
 const STYLES = StyleSheet.create({
     container: {
         flex: 1,
@@ -165,8 +193,6 @@ const STYLES = StyleSheet.create({
     drawerStyle: {
         width: 300,
         backgroundColor: COLOR.surface,
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
         borderTopRightRadius: 35,
         borderBottomRightRadius: 35,
         elevation: 20,
@@ -189,7 +215,6 @@ const STYLES = StyleSheet.create({
         backgroundColor: COLOR.primaryContainer,
         justifyContent: "center",
         alignItems: "center",
-        
     },
 
     avatarText: {
@@ -205,30 +230,6 @@ const STYLES = StyleSheet.create({
         color: "#FFFFFF",
     },
 
-    userRole: {
-        color: "#FFFFFFDD",
-        fontSize: 13,
-        marginBottom: 10,
-    },
-
-    balanceCard: {
-        marginTop: 12,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        flexDirection: "row",
-        gap: 10,
-        alignItems: "center",
-        backgroundColor: COLOR.surface,
-        borderRadius: 14,
-        
-    },
-
-    balanceText: {
-        fontSize: 15,
-        fontWeight: "700",
-        color: COLOR.primary,
-    },
-
     drawerLabel: {
         fontSize: 15,
         marginLeft: -10,
@@ -241,15 +242,15 @@ const STYLES = StyleSheet.create({
 
     sectionTitle: {
         paddingHorizontal: 20,
-        marginTop: 15,
-        marginBottom: 5,
+        marginTop: 20,
+        marginBottom: 8,
         fontSize: 12,
         textTransform: "uppercase",
         fontWeight: "700",
         color: COLOR.onSurfaceVariant,
     },
 
-    cardAction: {
+    cardOption: {
         marginHorizontal: 16,
         marginTop: 10,
         flexDirection: "row",
@@ -257,7 +258,6 @@ const STYLES = StyleSheet.create({
         padding: 14,
         borderRadius: 12,
         backgroundColor: COLOR.surfaceVariant,
-        
     },
 
     cardActionText: {
